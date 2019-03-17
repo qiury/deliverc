@@ -1,0 +1,26 @@
+数据库修改
+0. 修改数据的隔离级别
+select @@global.tx_isolation,@@tx_isolation;
+set session tx_isolation='read-committed';
+set GLOBAL tx_isolation='read-committed';
+
+1. 在gps表中根据id、经纬度创建联合唯一约束(理论上防止采集数据库的重复数据)，索引类型btree，根据这些信息生成代表该条记录的md5码
+alter table gps add unique index gps_4_md5(gpsid,LATITUDE,LONGITUDE)
+
+2. 在gps表中增加dataid列，用于表示当前记录的身份（在分布式环境数据的id是可能会重复的）
+alter table gps add COLUMN dataid varchar(70) unique comment '数据记录身份'
+
+3. acc表中也进行类似gps的处理
+
+4. 在各个表中增加utime和ctime字段，记录当前数据的最新更新时间，该记录的日期是数据库自动维护的
+alter table gps add COLUMN ctime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP comment '入库时间'
+alter table gps add COLUMN utime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
+
+5. 在gps表中添加表示image是否上传的标记
+alter table gps add column img_uploaded boolean not null default false comment '图像是否已经上传'
+
+6. 在gps表中添加表示image是否损坏或者丢失的标记
+alter table gps add column img_err boolean not null default false comment '图像是否损坏或者丢失'
+
+7. 在gps表中添加basedir字段，表示图像存储的根路径，这样做是为了兼容不同平台的需要
+alter table gps add column basedir varchar(70) not null default '' comment '图像存储的根路径'

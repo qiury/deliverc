@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org/DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.znjt.dao.mapper.GPSTransferBeanMapper">
+    <!--
+    开启当前命名空间的二级缓存需要显示使用cache标签
+        二级缓存的特点：
+        1. 二级缓存的作用域是命名空间级别的
+        2. sqlSession的增删改操作在清空一级缓存的同时会清空二级缓存
+        3. 二级缓存的情况操作只是把Key对应的value设置为null，而不是删除整个entry。
+        4. 发出查询操作的条件是二级缓存中不存在对应的entry或entry的value值为null。
+        eviction:缓存满员时的清楚策略；
+        flushInterval：清空缓存的时间间隔，防止数据不一致，使用默认的增删改操作清楚缓存。）
+        size：缓存对象的最大个数。
+        readOnly：缓存中的数据是否是只读的，默认是false，当为true时，缓存返回对象引用，当为false是
+        返回对象的一份拷贝，放置缓存中的数据被修改。
+     使用二级缓存的前提：
+        1. 多个namespace不要操作同一张表，因为二级缓存是基于namespace，如果多个namespace操作同一张表，那么数据的变化
+        另一个namespace是感知不到的，造成数据不一致的情况。
+        2. 一个DTO接口就操作一张表，这样确保了一个映射文件的命名空间和DTO接口的对应。
+        3. 对不变化的数据才需要使用二级缓存，否则二级缓存会降低效率。
+
+        cache默认使用mybatis自带的二级缓存实现，可以通过type指定到其他缓存产品上.
+        如ehcache:
+        <cache type="org.mybatis.caches.ehcache.EhcacheCache"/>
+
+        总之：二级缓存在项目中很少使用
+
+        其他：
+        1.每个select标签都有useCache="true"
+            false:不使用缓存（一级缓存依然使用，二级缓存不适用）
+        2.每个增删改标签的：flushCache="true";（一级、二级缓存都会清除）
+            增删改执行完成后就会清除缓存
+        3.SqlSession.cleanCache（）；只是清除当前Session的一级缓存
+
+    <cache eviction="FIFO" flushInterval="10800000" readOnly="true" size="512"/>
+    -->
+
+    <!--
+     <select id="" useCache="false">
+     useCache=false在语句级别禁止使用二级缓存
+     -->
+
+    <!--客户端 begin-->
+    <!--获取没有上传的记录-->
+    <select id="findUnUpLoadGPSRecordDatas" resultType="GPSTransferIniBean">
+        select GPSID,COLLECT_TIME,STATUS,LATITUDE,LONGITUDE,SPEED,AZIMUTH,DECLINATION,CREATE_TIME,UPLOAD_TIME,RESULT,AREA,dataid,UPLOADSTATUS
+         from gps where UPLOADSTATUS = 0 limit 0,#{pageSize}
+    </select>
+
+    <!--获取存在图像信息却没有上传图像的记录-->
+    <select id="findUnUpLoadGPSImgDatas" resultType="GPSTransferIniBean">
+         select GPSID,dataid, original_Url as originalUrl from gps where UPLOADSTATUS = 1 and img_uploaded = false and trim(ORIGINAL_URL)!='no image' limit 0,#{pageSize}
+    </select>
+
+    <!--更新刚刚更新成功的记录的状态-->
+    <update id="updateCurrentUpLoadedSuccessGPSRescords">
+        update gps set UPLOADSTATUS = 1 where
+        <foreach collection="list" item="item" separator="," open=" gpsid in (" close=")" >
+            #{item.gpsid}
+        </foreach>
+    </update>
+
+    <!--更新图像上传成功的记录-->
+    <!--<update id="updateCurrentUploadedSuccessGPSImgRecords">-->
+        <!--update gps set img_uploaded = true where-->
+        <!--<foreach collection="list" item="item" separator="," open=" gpsid in (" close=")" >-->
+            <!--#{item.gpsid}-->
+        <!--</foreach>-->
+    <!--</update>-->
+
+    <!--
+    批处理更新方式一
+    <update id="updateCurrentUploadedSuccessGPSImgRecords">-->
+        <!--<foreach collection="list" item="item"  open="" close="" separator=";">-->
+            <!--update gps-->
+            <!--<set>-->
+                <!--img_uploaded=${item.img_uploaded},-->
+                <!--img_err=${item.file_err}-->
+            <!--</set>-->
+            <!--where gpsid = ${item.gpsid}-->
+        <!--</foreach>-->
+    <!--</update>-->
+
+    <!--批量更新方式二：-->
+    <update id="updateCurrentUploadedSuccessGPSImgRecords" databaseId="mysql">
+        update gps
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="img_uploaded = case" suffix="end,">
+                <foreach collection="list" item="item" >
+                    when gpsid=#{item.gpsid} then #{item.img_uploaded}
+                </foreach>
+            </trim>
+            <trim prefix=" img_err = case" suffix="end,">
+                <foreach collection="list" item="item" >
+                    when gpsid=#{item.gpsid} then #{item.file_err}
+                </foreach>
+            </trim>
+        </trim>
+        where
+        <foreach collection="list" item="item" separator="," open=" gpsid in (" close=")" >
+           #{item.gpsid}
+        </foreach>
+    </update>
+
+
+    <!--客户端 end-->
+
+
+    <!--服务器端 begin-->
+    <insert databaseId="mysql" id="upLoadGPSRecordDatas2UpStream" keyProperty="id" >
+       insert into gps (GPSID,COLLECT_TIME,STATUS,LATITUDE,LONGITUDE,SPEED,AZIMUTH,DECLINATION,CREATE_TIME,UPLOAD_TIME,RESULT,AREA,dataid,UPLOADSTATUS)
+       values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.gpsid},#{item.collect_time},#{item.status},#{item.latitude},
+            #{item.longitude},#{item.speed},#{item.azimuth},#{item.declination},
+            #{item.create_time},#{item.upload_time},#{item.result},#{item.area},#{item.dataid},#{item.uploadstatus})
+        </foreach>
+        ON DUPLICATE KEY UPDATE gpsid= values(gpsid)
+    </insert>
+
+</mapper>
