@@ -33,7 +33,8 @@
          -->
         <RollingRandomAccessFile name="DataSource_RollingFile" fileName="${LOG_HOME}/DataSource.log"
                                  filePattern="${LOG_HOME}/$${date:yyyy-MM}/DataSource-%d{yyyy-MM-dd}-%i.log.zip">
-            <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+            <!--控制当前append接收日志的最低级别-->
+            <ThresholdFilter level="DEBUG" onMatch="ACCEPT" onMismatch="DENY"/>
             <PatternLayout  charset="UTF-8"  pattern="%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"/>
 
             <!--指定滚动日志的策略，就是什么时候进行新建日志文件输出日志.-->
@@ -43,9 +44,10 @@
                  下面的配置表示每隔一天生成一个压缩文件 -->
                 <TimeBasedTriggeringPolicy interval="1"/>
                 <!-- 固定大小来压缩日志文件 -->
-                <SizeBasedTriggeringPolicy size="5 MB"/>
-                <!-- 日志文件比当前jvm启动时间更早就会触发压缩日志文件 -->
-                <OnStartupTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+                <!-- 日志文件比当前jvm启动时间更早就会触发压缩日志文件
+                    <OnStartupTriggeringPolicy />
+                -->
             </Policies>
             <!--
                用来指定同一个文件夹下最多有几个日志文件时开始删除最旧的，创建新的(通过max属性)
@@ -67,15 +69,17 @@
 
         <RollingRandomAccessFile name="System_RollingFile" fileName="${LOG_HOME}/System.log"
                                  filePattern="${LOG_HOME}/$${date:yyyy-MM}/System-%d{yyyy-MM-dd}-%i.log.zip">
-            <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+            <!--控制当前append接收日志的最低级别-->
+            <ThresholdFilter level="DEBUG" onMatch="ACCEPT" onMismatch="DENY"/>
             <PatternLayout  charset="UTF-8"  pattern="%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"/>
 
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1"/>
                 <!-- 固定大小来压缩日志文件 -->
-                <SizeBasedTriggeringPolicy size="5 MB"/>
-                <!-- 日志文件比当前jvm启动时间更早就会触发压缩日志文件 -->
-                <OnStartupTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+                <!-- 日志文件比当前jvm启动时间更早就会触发压缩日志文件
+                    <OnStartupTriggeringPolicy />
+                -->
             </Policies>
             <DefaultRolloverStrategy max="20">
                 <!-- 日志文件保留的个数-->
@@ -92,15 +96,17 @@
 
         <RollingRandomAccessFile name="NetWork_RollingFile" fileName="${LOG_HOME}/NetWork.log"
                                  filePattern="${LOG_HOME}/$${date:yyyy-MM}/NetWork-%d{yyyy-MM-dd}-%i.log.zip">
-            <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+            <!--控制当前append接收日志的最低级别-->
+            <ThresholdFilter level="DEBUG" onMatch="ACCEPT" onMismatch="DENY"/>
             <PatternLayout  charset="UTF-8"  pattern="%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"/>
 
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1"/>
                 <!-- 固定大小来压缩日志文件 -->
-                <SizeBasedTriggeringPolicy size="5 MB"/>
-                <!-- 日志文件比当前jvm启动时间更早就会触发压缩日志文件 -->
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+                <!-- 日志文件比当前jvm启动时间更早就会触发压缩日志文件
                 <OnStartupTriggeringPolicy />
+                -->
             </Policies>
             <DefaultRolloverStrategy max="20">
                 <!-- 日志文件保留的个数-->
@@ -117,15 +123,17 @@
 
         <RollingRandomAccessFile name="Sql_RollingFile" fileName="${LOG_HOME}/ExecSql.log"
                                  filePattern="${LOG_HOME}/$${date:yyyy-MM}/ExecSql-%d{yyyy-MM-dd}-%i.log.zip">
-            <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+            <!--控制当前append接收日志的最低级别-->
+            <ThresholdFilter level="DEBUG" onMatch="ACCEPT" onMismatch="DENY"/>
             <PatternLayout  charset="UTF-8"  pattern="%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"/>
 
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1"/>
                 <!-- 固定大小来压缩日志文件 -->
-                <SizeBasedTriggeringPolicy size="5 MB"/>
-                <!-- 日志文件比当前jvm启动时间更早就会触发压缩日志文件 -->
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+                <!-- 日志文件比当前jvm启动时间更早就会触发压缩日志文件
                 <OnStartupTriggeringPolicy />
+                -->
             </Policies>
             <DefaultRolloverStrategy max="20">
                 <!-- 日志文件保留的个数-->
@@ -142,15 +150,17 @@
 
         <RollingRandomAccessFile name="Async_RollingFile" fileName="${LOG_HOME}/Async.log"
                                  filePattern="${LOG_HOME}/$${date:yyyy-MM}/Async-%d{yyyy-MM-dd}-%i.log.zip">
-            <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+            <!--控制当前append接收日志的最低级别-->
+            <ThresholdFilter level="DEBUG" onMatch="ACCEPT" onMismatch="DENY"/>
             <PatternLayout  charset="UTF-8"  pattern="%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"/>
 
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1"/>
                 <!-- 固定大小来压缩日志文件 -->
-                <SizeBasedTriggeringPolicy size="5 MB"/>
-                <!-- 日志文件比当前jvm启动时间更早就会触发压缩日志文件 -->
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+                <!-- 日志文件比当前jvm启动时间更早就会触发压缩日志文件
                 <OnStartupTriggeringPolicy />
+                -->
             </Policies>
             <DefaultRolloverStrategy max="20">
                 <!-- 日志文件保留的个数-->
@@ -209,9 +219,9 @@
     <Loggers>
         <!--共有8个级别，按照从低到高为：All < Trace < Debug < Info < Warn < Error < Fatal < OFF.-->
         <!--Root节点用来指定项目的根日志，如果没有单独指定Logger，那么就会默认使用该Root日志输出-->
-        <Root level="debug">
+        <Root level="info">
             <!--AppenderRef：Root的子节点，用来指定该日志输出到哪个Appender.-->
-            <AppenderRef ref="System_RollingFile" />
+            <AppenderRef ref="Console" />
             <!-- <AppenderRef ref="FileAsyncAppender" />
             <AppenderRef ref="RollingFileAsyncAppender" />
             <AppenderRef ref="MailAsyncAppender" /> -->
@@ -241,10 +251,7 @@
         <!--</Logger>-->
 
 
-        <!-- 这里定义的日志级别和每个appender定义的日志级共同起作用，取二者的交集 -->
-
-
-
+        <!--数据源的日志-->
         <Logger name="druid.sql" level="debug" additivity="false">
             <AppenderRef ref="Sql_RollingFile" />
         </Logger>
@@ -254,7 +261,6 @@
         <Logger name="druid.sql.ResultSet" level="warn" additivity="false">
             <AppenderRef ref="Sql_RollingFile" />
         </Logger>
-
 
         <Logger name="druid.sql.DataSource" level="debug" additivity="false">
             <AppenderRef ref="DataSource_RollingFile" />
@@ -267,8 +273,9 @@
             <AppenderRef ref="DataSource_RollingFile" />
         </Logger>
 
-        <Logger name="com.znjt.dao.mapper.GPSTransferBeanMapper" level="debug" additivity="false">
+        <Logger name="com.znjt.dao.mapper" level="debug" additivity="false">
             <AppenderRef ref="Sql_RollingFile" />
+            <AppenderRef ref="Console" />
         </Logger>
     </Loggers>
 

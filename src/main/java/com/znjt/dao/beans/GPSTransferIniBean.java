@@ -25,17 +25,12 @@ public class GPSTransferIniBean {
     private boolean img_uploaded;
     private String result;
     private String area;
-
-    /*
-      0表示未上传或者未上传成功
-     */
-
     private int uploadstatus;
-
     private String dataid;
-
     //表示当前关联的文件是否存在问题（丢失）
     private boolean file_err = false;
+    //根目录
+    private String baseDir;
 
 
     public String getGpsid() {
@@ -172,6 +167,14 @@ public class GPSTransferIniBean {
 
     public void setFile_err(boolean file_err) {
         this.file_err = file_err;
+    }
+
+    public String getBaseDir() {
+        return baseDir;
+    }
+
+    public void setBaseDir(String baseDir) {
+        this.baseDir = baseDir;
     }
 
     @Override

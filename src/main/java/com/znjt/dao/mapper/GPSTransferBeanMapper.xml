@@ -3,7 +3,8 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.znjt.dao.mapper.GPSTransferBeanMapper">
     <!--
-    开启当前命名空间的二级缓存需要显示使用cache标签
+    默认情况下，mybatis的全局二级缓存是启用的，但是各个Mapper配置文件中默认是关闭的。
+    开启当前命名空间的二级缓存需要显示使用cache标签。
         二级缓存的特点：
         1. 二级缓存的作用域是命名空间级别的
         2. sqlSession的增删改操作在清空一级缓存的同时会清空二级缓存
@@ -14,6 +15,9 @@
         size：缓存对象的最大个数。
         readOnly：缓存中的数据是否是只读的，默认是false，当为true时，缓存返回对象引用，当为false是
         返回对象的一份拷贝，放置缓存中的数据被修改。
+
+        5. 特别注意，当Session关闭时才会把Session中的数据放入到对应的命名空间的二级缓存中。
+        6. 数据查找的顺序：首先当当前命名空间的二级缓存中查找数据，再去当前Session中的一级缓存中查找数据。
      使用二级缓存的前提：
         1. 多个namespace不要操作同一张表，因为二级缓存是基于namespace，如果多个namespace操作同一张表，那么数据的变化
         另一个namespace是感知不到的，造成数据不一致的情况。
@@ -35,26 +39,60 @@
 
     <cache eviction="FIFO" flushInterval="10800000" readOnly="true" size="512"/>
     -->
+    <!--表示当前命名空间的二级缓存采用和哪个命名空间下的二级缓存使用相同的缓存产品和配置-->
+    <!--<cache-ref namespace="com.btt.xxx"/>-->
 
     <!--
      <select id="" useCache="false">
      useCache=false在语句级别禁止使用二级缓存
      -->
 
+    <!--
+    _parameter/_databaseId 是mybatis的内置参数，_parameter表示传入参数的引用，
+    _databaseId代表数据的VENDER，这两个参数可以在sql中直接使用
+    -->
+    <!--通过sql可以定义公用的片段-->
+    <!--<sql id="sub_fregment">-->
+        <!--id,name-->
+    <!--</sql>-->
+
+
     <!--客户端 begin-->
     <!--获取没有上传的记录-->
-    <select id="findUnUpLoadGPSRecordDatas" resultType="GPSTransferIniBean">
+    <select id="findUnUpLoadGPSRecordDatas" resultType="GPSTransferIniBean" useCache="false">
+
+        <!--
+        通过include标签引入外面定义的sql片段，同时可以在内部通过property定义新的属性，
+        在被引入的sql片段内中通过${}的方式获取新定义的属性值.注意，在sql片段中只能使用${}获取定义的
+        属性值，sql片段中是不能使用#{},因为sql片段是不能预编译的，而#{}的含义就是预编译。
+        <include refid="sub_fregment">-->
+            <!--<property name="username" value="sz"/>-->
+            <!--<property name="age" value="12"/>-->
+        <!--</include>-->
+        <!-- 通过ognl表达式获取value对应属性的值，将值赋值给新创建的变量，之后就可以在sql中引用这个变量-->
+        <!--<bind name="ps" value="pageSize"/>-->
+
         select GPSID,COLLECT_TIME,STATUS,LATITUDE,LONGITUDE,SPEED,AZIMUTH,DECLINATION,CREATE_TIME,UPLOAD_TIME,RESULT,AREA,dataid,UPLOADSTATUS
          from gps where UPLOADSTATUS = 0 limit 0,#{pageSize}
     </select>
 
-    <!--获取存在图像信息却没有上传图像的记录-->
-    <select id="findUnUpLoadGPSImgDatas" resultType="GPSTransferIniBean">
+    <!--
+    获取存在图像信息却没有上传图像的记录
+    flushCache默认是false，查询默认是不会清空一级二级缓存的。
+
+    session.clearCache()方法清空的是当前session的一级缓存，对二级缓存没有影响。
+    新版本的mybatis中的全局属性localCacheScope可以设置缓存的作用范围，默认是Session的，就是当前会话范围。当设置为Statement时
+    表示范围是语句范围，语句执行结束就情况缓存（类似select标签中的flushCache=true），这样即可以起到禁用一级缓存。
+    -->
+    <select id="findUnUpLoadGPSImgDatas" resultType="GPSTransferIniBean" useCache="false" flushCache="false">
          select GPSID,dataid, original_Url as originalUrl from gps where UPLOADSTATUS = 1 and img_uploaded = false and trim(ORIGINAL_URL)!='no image' limit 0,#{pageSize}
     </select>
 
-    <!--更新刚刚更新成功的记录的状态-->
-    <update id="updateCurrentUpLoadedSuccessGPSRescords">
+    <!--
+    更新刚刚更新成功的记录的状态
+    flushCache 默认是true，表示同时清空一级、二级缓存。
+    -->
+    <update id="updateCurrentUpLoadedSuccessGPSRescords" flushCache="true">
         update gps set UPLOADSTATUS = 1 where
         <foreach collection="list" item="item" separator="," open=" gpsid in (" close=")" >
             #{item.gpsid}
@@ -108,6 +146,12 @@
 
 
     <!--服务器端 begin-->
+
+    <!--更新服务端img记录-->
+    <update id="updateGPSImgPath2DBRecord">
+        update gps set basedir=#{baseDir}, ORIGINAL_URL=#{originalUrl} where dataId=#{dataid}
+    </update>
+
     <insert databaseId="mysql" id="upLoadGPSRecordDatas2UpStream" keyProperty="id" >
        insert into gps (GPSID,COLLECT_TIME,STATUS,LATITUDE,LONGITUDE,SPEED,AZIMUTH,DECLINATION,CREATE_TIME,UPLOAD_TIME,RESULT,AREA,dataid,UPLOADSTATUS)
        values

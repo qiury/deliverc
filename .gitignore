@@ -15,6 +15,9 @@ buildNumber.properties
 # Log Files
 *.log
 
+#bak
+*.bak
+
 #img file
 imgs/
 

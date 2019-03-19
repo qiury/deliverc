@@ -4,14 +4,12 @@ import com.znjt.dao.beans.GPSTransferIniBean;
 import com.znjt.exs.ExceptionInfoUtils;
 import com.znjt.proto.DataType;
 import com.znjt.proto.GPSRecord;
-import com.znjt.proto.SyncDataRequest;
 import com.znjt.proto.SyncDataResponse;
 import com.znjt.service.GPSTransferService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -65,8 +63,7 @@ public class TransferRespJobUtils {
                 while (!stop_task) {
                     try {
                         getJobs();
-                        //TODO 批量更新数据数据
-                        System.err.println("job size = " + tasks.size());
+                        logger.info(" upload image job size = " + tasks.size());
                         if (tasks.size() > 0) {
                             List<GPSTransferIniBean> datas = new ArrayList<>();
                             GPSTransferIniBean gpsTransferIniBean = null;

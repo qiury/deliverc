@@ -14,13 +14,18 @@ import java.util.Optional;
 public class TransportClient {
     private TransporterClientProxy transporterClientProxy;
 
-    public TransportClient(GPSTransferService localTransferService,String addr, int port, int max_batch_size){
-        transporterClientProxy = new TransporterClientProxy(localTransferService,addr,port,max_batch_size);
+    public TransportClient(GPSTransferService localTransferService, String addr, int port, int max_batch_size) {
+        transporterClientProxy = new TransporterClientProxy(localTransferService, addr, port, max_batch_size);
         createShutdownHook();
     }
 
-    public void uploadBigDataByRPC(List<GPSTransferIniBean> gpsTransferIniBeans){
-        if(gpsTransferIniBeans!=null&&gpsTransferIniBeans.size()>0){
+    public void uploadBigDataByRPC(List<GPSTransferIniBean> gpsTransferIniBeans) {
+        if (gpsTransferIniBeans != null && gpsTransferIniBeans.size() > 0) {
+            gpsTransferIniBeans.forEach(item -> {
+                if (item.getDataid() == null) {
+                    item.setDataid(item.getStatus() + "&" + item.getGpsid());
+                }
+            });
             transporterClientProxy.transferData2Server(gpsTransferIniBeans);
         }
     }
@@ -29,7 +34,7 @@ public class TransportClient {
     /**
      * 注册jvm关闭时释放线程资源的回调
      */
-    private void createShutdownHook(){
+    private void createShutdownHook() {
         //程序退出时关闭资源
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             release();
@@ -39,8 +44,8 @@ public class TransportClient {
     /**
      * 关闭线程资源
      */
-    private void release(){
-        Optional.ofNullable(transporterClientProxy).ifPresent(proxy->{
+    public void release() {
+        Optional.ofNullable(transporterClientProxy).ifPresent(proxy -> {
             proxy.release();
         });
     }

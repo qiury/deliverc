@@ -13,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Created by qiuzx on 2019-03-15
@@ -65,7 +67,19 @@ public class GPSTransferService {
      * @param gpsTransferIniBeans
      */
     public void upLoadGPSRecordDatas2UpStream(String dbname,List<GPSTransferIniBean> gpsTransferIniBeans){
+        //将gpsid和status字段组合成dataid
+        Optional.ofNullable(gpsTransferIniBeans).ifPresent(gbs->{
+            gbs.forEach(item->{
+                if(Objects.isNull(item.getDataid())||!item.getDataid().contains("&")) {
+                    item.setDataid(item.getStatus() + "&" + item.getGpsid());
+                }
+            });
+        });
         dao.upLoadGPSRecordDatas2UpStream(dbname,gpsTransferIniBeans);
+    }
+
+    public void updateGPSImgPath2DBRecord(GPSTransferIniBean gpsTransferIniBean){
+
     }
 
 }

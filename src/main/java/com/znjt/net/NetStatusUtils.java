@@ -47,15 +47,14 @@ public class NetStatusUtils {
                     if(line.contains("timeout")){
                         fail_times++;
                     }
-                    System.err.println(line);
+                    logger.debug(line);
                 }
-
                 if(fail_times==0){
                     quality = NetQuality.GOOD;
                 }else{
                     //成功率
                     int success_per =   (int)(((try_times-fail_times)*1.0/try_times)*100);
-                    if(success_per>70){
+                    if(success_per>60){
                         quality = NetQuality.NORMAL;
                     }else if(success_per>0){
                         quality = NetQuality.BAD;

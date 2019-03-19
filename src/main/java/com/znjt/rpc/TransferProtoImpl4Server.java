@@ -1,6 +1,8 @@
 package com.znjt.rpc;
 
 import com.google.protobuf.ByteString;
+import com.znjt.CommonFileUitls;
+import com.znjt.dao.beans.GPSTransferIniBean;
 import com.znjt.exs.ExceptionInfoUtils;
 import com.znjt.proto.*;
 import com.znjt.utils.FileIOUtils;
@@ -21,7 +23,15 @@ import java.util.concurrent.*;
 public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServiceImplBase {
     private static Logger logger = LoggerFactory.getLogger(TransferProtoImpl4Server.class);
     //private static ExecutorService executorService = new ThreadPoolExecutor(2, 4, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+    private GPSTransferIniBean gpsTransferIniBean = new GPSTransferIniBean();
+    private static final String BASE_DIR = CommonFileUitls.getProjectPath();
+    static {
+        FileIOUtils.init_fs_dirs(BASE_DIR+"/fs/");
+    }
 
+    public static void main(String[] args) {
+
+    }
     @Override
     public StreamObserver<SyncDataRequest> transporterByStream(StreamObserver<SyncDataResponse> responseObserver) {
         StreamObserver<SyncDataRequest> streamObserver = new StreamObserver<SyncDataRequest>() {
@@ -65,9 +75,9 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
                 img_err = false;
                 //TODO 保存图像数据
                 byte[] imgs = byteString.toByteArray();
-                System.err.println("imgs size = " + imgs.length+" bytes");
-                String temp = "/Users/qiuzx/IdeaProjects/qiuzx/deliverc/imgs/";
-                FileIOUtils.saveBinaryImg2Disk(temp+gpsRecord.getClientRecordId()+".jpg",imgs);
+                String path = BASE_DIR + FileIOUtils.createRelativePath4Image(gpsRecord.getDataId());
+                FileIOUtils.saveBinaryImg2Disk(path,imgs);
+                // TODO 更新数据中的路径信息
                 ops_res = true;
             }
             record = GPSRecord.newBuilder().setClientRecordId(gpsRecord.getClientRecordId())

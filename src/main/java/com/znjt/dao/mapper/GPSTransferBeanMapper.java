@@ -9,6 +9,7 @@ import java.util.List;
  * Created by qiuzx on 2019-03-12
  * Company BTT
  * Depart Tech
+ * @author qiuzx
  */
 public interface GPSTransferBeanMapper extends Mapper {
     /**
@@ -25,6 +26,8 @@ public interface GPSTransferBeanMapper extends Mapper {
     void updateCurrentUploadedSuccessGPSImgRecords(List<GPSTransferIniBean> gpsTransferIniBeans);
 
     void upLoadGPSRecordDatas2UpStream(List<GPSTransferIniBean> gpsTransferIniBeans);
+
+    boolean updateGPSImgPath2DBRecord(GPSTransferIniBean gpsTransferIniBean);
 
    // void batchInsertMonitorGPSDatas(List<GPSTransferIniBean> gpsTransferIniBeans);
 }

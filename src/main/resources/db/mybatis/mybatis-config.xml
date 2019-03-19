@@ -28,8 +28,15 @@
 
         <!--驼峰命名自动匹配，默认是false表示没有开启-->
         <setting name="mapUnderscoreToCamelCase" value="false" />
+        <!--打印sql到控制台-->
+        <!--<setting name="logImpl" value="STDOUT_LOGGING" />-->
 
-        <setting name="logImpl" value="STDOUT_LOGGING" />
+        <!--<setting name="logPrefix" value="mybatis.sql."/>-->
+        <setting name="logImpl" value="SLF4J"/>
+        <!--mybatis默认处理null，映射为JdbcType的OTHER类型，这个类型oracle是不支持的，
+        MySQL是支持的，这里设置为JdbcType中的NULL类型，数据都支持NULL类型-->
+        <setting name="jdbcTypeForNull" value="NULL" />
+
     </settings>
     <!--定义别名-->
     <typeAliases>
@@ -44,8 +51,8 @@
     </typeAliases>
 
     <!-- 声明数据连接环境 -->
-    <environments default="db01">
-        <environment id="db01">
+    <environments default="master">
+        <environment id="master">
             <transactionManager type="JDBC" />
             <!--
             dataSource type=：
@@ -55,9 +62,9 @@
             -->
             <dataSource type="com.znjt.datasource.DefineDataSourceFactory">
                 <property name="druid.driver" value="${druid.driver}"/>
-                <property name="druid.url" value="${db01.url}"/>
-                <property name="druid.username" value="${db01.username}"/>
-                <property name="druid.password" value="${db01.password}"/>
+                <property name="druid.url" value="${db_master.url}"/>
+                <property name="druid.username" value="${db_master.username}"/>
+                <property name="druid.password" value="${db_master.password}"/>
                 <property name="druid.initialSize" value="${druid.initialSize}"/>
                 <property name="druid.maxActive" value="${druid.maxActive}"/>
                 <property name="druid.maxWait" value="${druid.maxWait}"/>
@@ -84,7 +91,7 @@
 
             </dataSource>
         </environment>
-        <environment id="db02">
+        <environment id="slave">
             <transactionManager type="JDBC" />
             <!--
             dataSource type=：
@@ -94,9 +101,9 @@
             -->
             <dataSource type="com.znjt.datasource.DefineDataSourceFactory">
                 <property name="druid.driver" value="${druid.driver}"/>
-                <property name="druid.url" value="${db02.url}"/>
-                <property name="druid.username" value="${db02.username}"/>
-                <property name="druid.password" value="${db02.password}"/>
+                <property name="druid.url" value="${db_slave.url}"/>
+                <property name="druid.username" value="${db_slave.username}"/>
+                <property name="druid.password" value="${db_slave.password}"/>
                 <property name="druid.initialSize" value="${druid.initialSize}"/>
                 <property name="druid.maxActive" value="${druid.maxActive}"/>
                 <property name="druid.maxWait" value="${druid.maxWait}"/>
@@ -123,6 +130,7 @@
 
             </dataSource>
         </environment>
+
         <environment id="db03">
             <transactionManager type="JDBC" />
             <!--

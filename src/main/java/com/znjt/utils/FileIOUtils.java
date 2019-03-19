@@ -2,16 +2,14 @@ package com.znjt.utils;
 
 import com.znjt.exs.FileIOException;
 import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import sun.rmi.runtime.Log;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.IntStream;
 
 /**
  * Created by qiuzx on 2019-03-15
@@ -19,7 +17,10 @@ import java.io.OutputStream;
  * Depart Tech
  */
 public class FileIOUtils {
-    private FileIOUtils(){}
+
+    private FileIOUtils(){
+
+    }
     /**
      * 从指定位置读取二进制文件
      * @return
@@ -48,6 +49,45 @@ public class FileIOUtils {
             IOUtils.write(imgs,os);
         }catch (Exception ex){
             throw new FileIOException(ex);
+        }
+    }
+
+    /**
+     * 为图像创建相对路径
+     * @return
+     */
+    public static String createRelativePath4Image(String imageName){
+        StringBuilder sb = new StringBuilder("/");
+        sb.append(getRandomFlag());
+        sb.append("/");
+        sb.append(getRandomFlag());
+        sb.append("/").append(imageName).append(".jpg");
+        return sb.toString();
+    }
+
+    /**
+     * 生成随机数
+     * @return
+     */
+    private static String getRandomFlag(){
+        return String.format("%02x",ThreadLocalRandom.current().nextInt(0,128));
+    }
+
+    /**
+     * 初始化文件存储目录12**128个
+     */
+    public static void init_fs_dirs(String base_dir){
+        String dirs;
+        File dir = null;
+        for(int i=0;i<128;i++){
+            for(int j=0;j<128;j++){
+                dirs = base_dir+String.format("%02x",i)+"/"+String.format("%02x",j);
+                dir = new File(dirs);
+                if(!dir.exists()){
+                    boolean res = dir.mkdirs();
+                    System.err.println("创建系统文件夹["+dirs+"] " + (res?"success":"failure"));
+                }
+            }
         }
     }
 }

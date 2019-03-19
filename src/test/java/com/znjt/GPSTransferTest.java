@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -106,6 +107,21 @@ public class GPSTransferTest {
     }
 
     @Test
+    public void testUpdateAllGPSRescords(){
+        Instant instant = Instant.now();
+
+        List<GPSTransferIniBean> recordDatas = gpsTransferService.findUnUpLoadGPSRecordDatas("db02", 200);
+
+        while(recordDatas!=null&&recordDatas.size()>0){
+            gpsTransferService.upLoadGPSRecordDatas2UpStream("db01",recordDatas);
+            gpsTransferService.updateCurrentUpLoadedSuccessGPSRescords("db02",recordDatas);
+            recordDatas = gpsTransferService.findUnUpLoadGPSRecordDatas("db02",200);
+        }
+        Duration duration = Duration.between(instant,Instant.now());
+        System.err.println("总计耗时: "+duration.toMillis() + " 毫米");
+    }
+
+    @Test
     public void testUpLoadImgDatas(){
         File file = new File("imgs/ai.png");
         startServerAndUploadImgs(file.getAbsolutePath());
@@ -117,7 +133,7 @@ public class GPSTransferTest {
             @Override
             public void run() {
                 TransporterServer servers = new TransporterServer();
-                servers.startServer();
+                servers.startServer(9898);
             }
         });
         server.start();
