@@ -12,11 +12,12 @@ import java.io.IOException;
  * Created by qiuzx on 2019-03-14
  * Company BTT
  * Depart Tech
+ * @author qiuzx
  */
 public class TransporterServer {
     private Logger logger = LoggerFactory.getLogger(TransporterServer.class);
     private Server server = null;
-    private static final int RPC_PORT = 9898;
+    private int RPC_PORT = 9898;
     private TransferProtoImpl4Server transporterServer;
 
     private void start() throws IOException {
@@ -40,7 +41,6 @@ public class TransporterServer {
         }));
     }
 
-
     private void await4terminal() {
         try {
             server.awaitTermination();
@@ -58,6 +58,9 @@ public class TransporterServer {
      */
     public void startServer(int port) {
         try {
+            if(port>0) {
+                RPC_PORT = port;
+            }
             start();
             await4terminal();
         } catch (IOException e) {
@@ -74,8 +77,5 @@ public class TransporterServer {
             }
             server.shutdown();
         }
-//        if (transporterServer != null) {
-//            transporterServer.close();
-//        }
     }
 }

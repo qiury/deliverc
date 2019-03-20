@@ -45,6 +45,7 @@ public class TransferRespJobUtils {
      * @param response
      */
     public void addNewJob(SyncDataResponse response) {
+        logger.info("服务端返回图像处理结果，将任务方法工作队列，唤醒工作线程处理响应结果....");
         jobs.offer(response);
         synchronized (monitor) {
             monitor.notifyAll();
@@ -63,15 +64,17 @@ public class TransferRespJobUtils {
                 while (!stop_task) {
                     try {
                         getJobs();
-                        logger.info(" upload image job size = " + tasks.size());
+                        if(logger.isDebugEnabled()) {
+                            logger.debug("客户端待处理的图像上传结果更新任务个数 = " + tasks.size());
+                        }
                         if (tasks.size() > 0) {
                             List<GPSTransferIniBean> datas = new ArrayList<>();
                             GPSTransferIniBean gpsTransferIniBean = null;
                             for (SyncDataResponse request : tasks) {
-                                //TODO 处理服务端发送的响应
+                                //处理服务端发送的响应
                                 DataType dataType = request.getDataType();
                                 if (dataType == DataType.T_GPS) {
-                                    System.err.println("cleint say : recievie gps response from server .....");
+
                                     GPSRecord gpsRecord = request.getGpsRecord();
                                     String cid = gpsRecord.getClientRecordId();
                                     String did = gpsRecord.getDataId();
@@ -86,11 +89,12 @@ public class TransferRespJobUtils {
                                     }
                                 }
                             }
-
                             if(datas.size()>0){
-                                localTransferService.updateCurrentUploadedSuccessGPSImgRecords("db01",datas);
+                                if(logger.isDebugEnabled()) {
+                                    logger.debug("客户端图像上传结果工作线程 : 开始更新Master数据库中记录的状态，任务个数="+datas.size());
+                                }
+                                localTransferService.updateCurrentUploadedSuccessGPSImgRecords("master",datas);
                             }
-
                         } else {
                             synchronized (monitor) {
                                 try {
@@ -163,20 +167,19 @@ public class TransferRespJobUtils {
         if (logger.isDebugEnabled()) {
             logger.debug("开始执行关闭客户端处理图像上传后更新数据库的任务线程[shutdown],最长等待60S");
         }
-        if (worker != null && !worker.isShutdown() && !worker.isTerminated()) {
+        if (worker != null) {
             try {
                 worker.shutdown();
-                worker.awaitTermination(60, TimeUnit.SECONDS);
-                if (worker.isShutdown() || worker.isTerminated()) {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("关闭客户端处理图像上传后更新数据库的任务线程--完成");
-                    }
-                } else {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("等待关闭客户端处理图像上传后更新数据库的任务线程--超时[shutdownNow],强行关闭");
-                    }
-                    worker.shutdownNow();
-                }
+               if(worker.awaitTermination(60, TimeUnit.SECONDS)){
+                   if (logger.isDebugEnabled()) {
+                       logger.debug("关闭客户端处理图像上传后更新数据库的任务线程--完成");
+                   }
+               }else {
+                   if (logger.isDebugEnabled()) {
+                       logger.debug("等待关闭客户端处理图像上传后更新数据库的任务线程--超时[shutdownNow],强行关闭");
+                   }
+                   worker.shutdownNow();
+               }
             } catch (InterruptedException e) {
                 if (logger.isDebugEnabled()) {
                     logger.debug("执行关闭客户端处理图像上传后更新数据库的任务线程[被Interrupted]");

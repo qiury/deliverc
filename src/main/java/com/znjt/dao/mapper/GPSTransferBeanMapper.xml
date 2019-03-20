@@ -85,7 +85,7 @@
     表示范围是语句范围，语句执行结束就情况缓存（类似select标签中的flushCache=true），这样即可以起到禁用一级缓存。
     -->
     <select id="findUnUpLoadGPSImgDatas" resultType="GPSTransferIniBean" useCache="false" flushCache="false">
-         select GPSID,dataid, original_Url as originalUrl from gps where UPLOADSTATUS = 1 and img_uploaded = false and trim(ORIGINAL_URL)!='no image' limit 0,#{pageSize}
+         select GPSID,STATUS,dataid, original_Url as originalUrl from gps where UPLOADSTATUS = 1 and img_uploaded = false and trim(ORIGINAL_URL)!='no image' limit 0,#{pageSize}
     </select>
 
     <!--
@@ -147,9 +147,11 @@
 
     <!--服务器端 begin-->
 
-    <!--更新服务端img记录-->
+    <!--
+       更新服务端img记录,ORIGINAL_URL 为null说明没有更新过图像，放置重复上传图像
+    -->
     <update id="updateGPSImgPath2DBRecord">
-        update gps set basedir=#{baseDir}, ORIGINAL_URL=#{originalUrl} where dataId=#{dataid}
+        update gps set basedir=#{baseDir}, ORIGINAL_URL=#{originalUrl} where dataId=#{dataid} and ORIGINAL_URL is null
     </update>
 
     <insert databaseId="mysql" id="upLoadGPSRecordDatas2UpStream" keyProperty="id" >

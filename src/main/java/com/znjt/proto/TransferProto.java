@@ -58,11 +58,13 @@ public final class TransferProto {
       "record_id\030\001 \001(\t\022\016\n\006dataId\030\002 \001(\t\022\024\n\014serv_" +
       "ops_res\030\003 \001(\010\022\020\n\010img_data\030\004 \001(\014\022\020\n\010file_" +
       "err\030\005 \001(\010* \n\010DataType\022\t\n\005T_INI\020\000\022\t\n\005T_GP" +
-      "S\020\0012q\n\017TransferService\022^\n\023transporterByS" +
-      "tream\022\037.com.znjt.proto.SyncDataRequest\032 " +
-      ".com.znjt.proto.SyncDataResponse\"\000(\0010\001B!" +
-      "\n\016com.znjt.protoB\rTransferProtoP\001b\006proto" +
-      "3"
+      "S\020\0012\313\001\n\017TransferService\022^\n\023transporterBy" +
+      "Stream\022\037.com.znjt.proto.SyncDataRequest\032" +
+      " .com.znjt.proto.SyncDataResponse\"\000(\0010\001\022" +
+      "X\n\021transporterBySync\022\037.com.znjt.proto.Sy" +
+      "ncDataRequest\032 .com.znjt.proto.SyncDataR" +
+      "esponse\"\000B!\n\016com.znjt.protoB\rTransferPro" +
+      "toP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

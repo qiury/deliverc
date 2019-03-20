@@ -2,15 +2,15 @@ package com.znjt.rpc;
 
 import com.google.protobuf.ByteString;
 import com.znjt.CommonFileUitls;
+import com.znjt.boot.Boot;
 import com.znjt.dao.beans.GPSTransferIniBean;
 import com.znjt.exs.ExceptionInfoUtils;
 import com.znjt.proto.*;
+import com.znjt.service.GPSTransferService;
 import com.znjt.utils.FileIOUtils;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.*;
 
 
 /**
@@ -22,22 +22,29 @@ import java.util.concurrent.*;
  */
 public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServiceImplBase {
     private static Logger logger = LoggerFactory.getLogger(TransferProtoImpl4Server.class);
-    //private static ExecutorService executorService = new ThreadPoolExecutor(2, 4, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
-    private GPSTransferIniBean gpsTransferIniBean = new GPSTransferIniBean();
     private static final String BASE_DIR = CommonFileUitls.getProjectPath();
+    private GPSTransferService gpsTransferService = new GPSTransferService();
     static {
-        FileIOUtils.init_fs_dirs(BASE_DIR+"/fs/");
+        FileIOUtils.init_fs_dirs(BASE_DIR,"/fs/");
     }
 
-    public static void main(String[] args) {
-
+    /**
+     * 同步处理请求的方式
+     * @param request
+     * @param responseObserver
+     */
+    @Override
+    public void transporterBySync(SyncDataRequest request, StreamObserver<SyncDataResponse> responseObserver) {
+        doneClientRequest(request,responseObserver);
+        responseObserver.onCompleted();
     }
+
     @Override
     public StreamObserver<SyncDataRequest> transporterByStream(StreamObserver<SyncDataResponse> responseObserver) {
         StreamObserver<SyncDataRequest> streamObserver = new StreamObserver<SyncDataRequest>() {
             @Override
             public void onNext(SyncDataRequest syncDataRequest) {
-                System.err.println("server say:  receive request from client ......");
+                logger.debug("server say:  receive img upload request from client ......");
                 doneClientRequest(syncDataRequest,responseObserver);
                // executorService.execute(new Task(syncDataRequest, responseObserver));
             }
@@ -55,17 +62,17 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
         return streamObserver;
     }
 
+
     private void doneClientRequest(SyncDataRequest syncDataRequest, StreamObserver<SyncDataResponse> responseObserver) {
         //GPS表
         if (syncDataRequest.getDataType() == DataType.T_GPS) {
             GPSRecord gpsRecord = syncDataRequest.getGpsRecord();
 
-            //TODO处理客户端图像
+            //处理客户端图像
             String dataId = gpsRecord.getDataId();
             ByteString byteString = gpsRecord.getImgData();
             boolean ops_res = false;
             boolean img_err = false;
-            System.err.println("server img bytes status has data? === " + !byteString.isEmpty());
             GPSRecord record = null;
             if (byteString.isEmpty()) {
                 //没有图像数据不处理，直接向客户端方式数据出结果和图像数据状态
@@ -73,12 +80,31 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
                 img_err = true;
             } else {
                 img_err = false;
-                //TODO 保存图像数据
+
                 byte[] imgs = byteString.toByteArray();
-                String path = BASE_DIR + FileIOUtils.createRelativePath4Image(gpsRecord.getDataId());
-                FileIOUtils.saveBinaryImg2Disk(path,imgs);
-                // TODO 更新数据中的路径信息
-                ops_res = true;
+                String sub_path = FileIOUtils.createRelativePath4Image(gpsRecord.getDataId());
+                String path = BASE_DIR + sub_path;
+                try {
+                    //保存失败会抛出异常
+                    FileIOUtils.saveBinaryImg2Disk(path,imgs);
+                    //更新数据中的路径信息
+                    GPSTransferIniBean gpsTransferIniBean = new GPSTransferIniBean();
+                    gpsTransferIniBean.setDataid(gpsRecord.getDataId());
+                    gpsTransferIniBean.setOriginalUrl(sub_path);
+                    gpsTransferIniBean.setBaseDir(BASE_DIR);
+                    int res = gpsTransferService.updateGPSImgPath2DBRecord(Boot.UPSTREAM_DBNAME,gpsTransferIniBean);
+                    ops_res = true;
+                    //说明没有记录被更新(数据重复上传)
+                    if(res==0){
+                        logger.warn("Warn：路径在"+path+"图像，名称为["+gpsRecord.getDataId()+".jgp]已经存在，进行去重操作...");
+                        FileIOUtils.deleteFile(path);
+                    }
+                }catch (Exception ex){
+                    ex.printStackTrace();
+                    //如果操作失败就删除文件夹中的图像
+                    FileIOUtils.deleteFile(path);
+                    ops_res = false;
+                }
             }
             record = GPSRecord.newBuilder().setClientRecordId(gpsRecord.getClientRecordId())
                     .setServOpsRes(ops_res).setFileErr(img_err).build();
@@ -90,7 +116,6 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
         } else if (syncDataRequest.getDataType() == DataType.T_INI) {
 
         }
-
     }
 
     /**

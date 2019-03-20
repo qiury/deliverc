@@ -78,8 +78,9 @@ public class GPSTransferService {
         dao.upLoadGPSRecordDatas2UpStream(dbname,gpsTransferIniBeans);
     }
 
-    public void updateGPSImgPath2DBRecord(GPSTransferIniBean gpsTransferIniBean){
-
+    public int updateGPSImgPath2DBRecord(String dbName,GPSTransferIniBean gpsTransferIniBean){
+        return dao.updateGPSImgPath2DBRecord(dbName,gpsTransferIniBean);
     }
+
 
 }

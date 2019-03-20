@@ -4,12 +4,7 @@ import com.znjt.exs.FileIOException;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.IntStream;
 
 /**
  * Created by qiuzx on 2019-03-15
@@ -27,9 +22,11 @@ public class FileIOUtils {
      */
     public static byte[] getImgBytesDataFromPath(String path){
         byte[] bytes = null;
+        if(path==null||path.trim().equals("")){
+            path = "/Users/qiuzx/IdeaProjects/qiuzx/deliverc/imgs/ai.png";
+        }
         if(path!=null){
             try(InputStream is = new FileInputStream(path)){
-               // BufferedImage read = ImageIO.read(is);
                 bytes = new byte[is.available()];
                 IOUtils.read(is,bytes);
             }catch (Exception ex){
@@ -53,11 +50,22 @@ public class FileIOUtils {
     }
 
     /**
-     * 为图像创建相对路径
+     * 删除文件
+     * @param abs_path
+     */
+    public static void deleteFile(String abs_path){
+        File file = new File(abs_path);
+        if(file.exists()){
+            file.delete();
+        }
+    }
+
+    /**
+     * 为图像创建相对路径,相对fs目录
      * @return
      */
     public static String createRelativePath4Image(String imageName){
-        StringBuilder sb = new StringBuilder("/");
+        StringBuilder sb = new StringBuilder("/fs/");
         sb.append(getRandomFlag());
         sb.append("/");
         sb.append(getRandomFlag());
@@ -76,12 +84,12 @@ public class FileIOUtils {
     /**
      * 初始化文件存储目录12**128个
      */
-    public static void init_fs_dirs(String base_dir){
+    public static void init_fs_dirs(String base_dir,String relative_dir){
         String dirs;
         File dir = null;
         for(int i=0;i<128;i++){
             for(int j=0;j<128;j++){
-                dirs = base_dir+String.format("%02x",i)+"/"+String.format("%02x",j);
+                dirs = base_dir+relative_dir+String.format("%02x",i)+"/"+String.format("%02x",j);
                 dir = new File(dirs);
                 if(!dir.exists()){
                     boolean res = dir.mkdirs();

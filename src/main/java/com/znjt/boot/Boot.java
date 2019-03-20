@@ -22,6 +22,15 @@ import static java.util.regex.Pattern.*;
  * Depart Tech
  */
 public class Boot {
+    //目标数据源名称
+    public static final String UPSTREAM_DBNAME = "slave";
+    //源数据源名称
+    public static final String DOWNSTREAM_DBNAME = "master";
+    //普通记录批处理大小
+    public static final int RECORD_BATCH_SIZE = 500;
+    //图像记录批处理大小
+    public static final int IMAGE_BATCH_SIZE = 50;
+
     private static boolean is_server = false;
     private static ClientBoot clientBoot;
     private static ExecutorService executorService = new ThreadPoolExecutor(1,1,0, TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(1));
@@ -31,11 +40,9 @@ public class Boot {
      * @param args
      */
     public static void main(String[] args) throws Exception{
-        System.out.println(CommonFileUitls.getProjectPath());
-        System.out.println(CommonFileUitls.getRealPath());
         try {
             Properties properties = read_sys_cfg();
-           // read_opt_from_terminal(properties);
+            read_opt_from_terminal(properties);
         }catch (Exception ex){
             System.err.println(ExceptionInfoUtils.getExceptionCauseInfo(ex));
             Runtime.getRuntime().halt(-1);
@@ -138,10 +145,12 @@ public class Boot {
                     if(!executorService.isShutdown()){
                         executorService.shutdown();;
                     }
-                    executorService.awaitTermination(15,TimeUnit.SECONDS);
-                    if(executorService.isShutdown()){
-                        System.err.println("任务线程执行结束...");
+                    if(!executorService.awaitTermination(15,TimeUnit.SECONDS)){
+                        executorService.shutdownNow();
                     }else{
+                        System.err.println("任务线程执行结束...");
+                    }
+                    if(!executorService.isShutdown()){
                         System.err.println("等待任务线程执行结束...超时，执行强制退出");
                         Runtime.getRuntime().halt(-1);
                     }

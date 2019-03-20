@@ -27,7 +27,7 @@ public interface GPSTransferBeanMapper extends Mapper {
 
     void upLoadGPSRecordDatas2UpStream(List<GPSTransferIniBean> gpsTransferIniBeans);
 
-    boolean updateGPSImgPath2DBRecord(GPSTransferIniBean gpsTransferIniBean);
+    int updateGPSImgPath2DBRecord(GPSTransferIniBean gpsTransferIniBean);
 
    // void batchInsertMonitorGPSDatas(List<GPSTransferIniBean> gpsTransferIniBeans);
 }

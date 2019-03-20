@@ -85,4 +85,24 @@ public class GPSTransferDao {
             EnhanceDbUtils.closeSession();
         }
     }
+
+    /**
+     * 更新最新图像的路径到数据库
+     * @param dbname
+     * @param gpsTransferIniBean
+     */
+    public int updateGPSImgPath2DBRecord(String dbname,GPSTransferIniBean gpsTransferIniBean){
+        try {
+            SqlSession sqlSession = EnhanceMapperFactory.getMultiSqlSession(dbname, false);
+            GPSTransferBeanMapper mapper = EnhanceMapperFactory.createMapper(GPSTransferBeanMapper.class, sqlSession);
+            int updated = mapper.updateGPSImgPath2DBRecord(gpsTransferIniBean);
+            sqlSession.commit();
+            return updated;
+        } catch (Exception e) {
+            new DBException(e,"更新GPS接收到的图像存储路径到数据库出现异常");
+        } finally {
+            EnhanceDbUtils.closeSession();
+        }
+        return 0;
+    }
 }

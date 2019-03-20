@@ -30,6 +30,7 @@ public class ClientBoot {
     private int server_port = 9898;
     //网络是否准许连接（是否畅通）
     private volatile boolean net_allowed_connect = false;
+    private volatile boolean exit_sys_stauts = false;
     private ACCTransferService accTransferService;
     private GPSTransferService gpsTransferService;
     private TransportClient client;
@@ -54,7 +55,7 @@ public class ClientBoot {
     private void init() {
         accTransferService = new ACCTransferService();
         gpsTransferService = new GPSTransferService();
-        client = new TransportClient(gpsTransferService, server_ip, server_port, 300);
+        client = new TransportClient(gpsTransferService, server_ip, server_port, Boot.IMAGE_BATCH_SIZE);
         start_monitor_jobs();
     }
 
@@ -63,8 +64,8 @@ public class ClientBoot {
      */
     private void start_monitor_jobs() {
         start_net_jobs();
-        //start_gps_record_jobs();
-//        start_gps_img_jobs();
+        start_gps_record_jobs();
+        start_gps_img_jobs();
         start_acc_jobs();
     }
 
@@ -72,6 +73,7 @@ public class ClientBoot {
         if(client!=null){
             client.release();
         }
+        exit_sys_stauts = true;
     }
 
     private void start_net_jobs() {
@@ -145,14 +147,14 @@ public class ClientBoot {
      */
     private void start_monitor_gps_img() {
         logger.info("检查是否存在要上传的gps图像数据...");
-        List<GPSTransferIniBean> recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas("master", 1);
+        List<GPSTransferIniBean> recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas(Boot.DOWNSTREAM_DBNAME, Boot.IMAGE_BATCH_SIZE);
         while (recordDatas != null && recordDatas.size() > 0) {
             Optional.ofNullable(recordDatas).ifPresent(item -> {
                 logger.info("开始上传gps图像数据...[" + item.size() + "]条");
                 client.uploadBigDataByRPC(item);
             });
-            recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas("master", 1);
-            if (!net_allowed_connect) {
+            recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas(Boot.DOWNSTREAM_DBNAME, Boot.IMAGE_BATCH_SIZE);
+            if (!net_allowed_connect||exit_sys_stauts) {
                 break;
             }
         }
@@ -164,13 +166,13 @@ public class ClientBoot {
      */
     private void start_monitor_gps_records() {
         logger.info("检查是否存在要上传的gps记录数据...");
-        List<GPSTransferIniBean> recordDatas = gpsTransferService.findUnUpLoadGPSRecordDatas("master", 500);
+        List<GPSTransferIniBean> recordDatas = gpsTransferService.findUnUpLoadGPSRecordDatas(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
         while (recordDatas != null && recordDatas.size() > 0) {
             logger.info("开始批量上传GPS记录[" + recordDatas.size() + "]条");
-            gpsTransferService.upLoadGPSRecordDatas2UpStream("slave", recordDatas);
-            gpsTransferService.updateCurrentUpLoadedSuccessGPSRescords("master", recordDatas);
-            recordDatas = gpsTransferService.findUnUpLoadGPSRecordDatas("master", 500);
-            if (!net_allowed_connect) {
+            gpsTransferService.upLoadGPSRecordDatas2UpStream(Boot.UPSTREAM_DBNAME, recordDatas);
+            gpsTransferService.updateCurrentUpLoadedSuccessGPSRescords(Boot.DOWNSTREAM_DBNAME, recordDatas);
+            recordDatas = gpsTransferService.findUnUpLoadGPSRecordDatas(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
+            if (!net_allowed_connect||exit_sys_stauts) {
                 break;
             }
         }
@@ -182,14 +184,14 @@ public class ClientBoot {
      */
     private void start_monitor_acc() {
         logger.info("检查是否存在要上传的ACC记录数据...");
-        List<ACCTransferIniBean> recordDatas = accTransferService.findUnUpLoadACCRecordDatas("master", 1);
+        List<ACCTransferIniBean> recordDatas = accTransferService.findUnUpLoadACCRecordDatas(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
         while (recordDatas != null && recordDatas.size() > 0) {
             logger.info("开始批量上传ACC记录[" + recordDatas.size() + "]条");
-            accTransferService.upLoadACCRecordDatas2UpStream("slave", recordDatas);
-            accTransferService.updateCurrentUpLoadedSuccessACCRescords("master", recordDatas);
-            recordDatas = accTransferService.findUnUpLoadACCRecordDatas("master", 1);
+            accTransferService.upLoadACCRecordDatas2UpStream(Boot.UPSTREAM_DBNAME, recordDatas);
+            accTransferService.updateCurrentUpLoadedSuccessACCRescords(Boot.DOWNSTREAM_DBNAME, recordDatas);
+            recordDatas = accTransferService.findUnUpLoadACCRecordDatas(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
             //如果网络不准许就中断任务
-            if (!net_allowed_connect) {
+            if (!net_allowed_connect||exit_sys_stauts) {
                 break;
             }
         }

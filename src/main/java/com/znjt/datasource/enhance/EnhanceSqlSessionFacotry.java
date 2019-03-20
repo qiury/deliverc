@@ -36,10 +36,9 @@ final public class EnhanceSqlSessionFacotry {
             try {
                 InputStream inputStream = Resources.getResourceAsStream(CONFIGURATION_PATH);
                 sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream, environment);
-                logger.info("Get {"+environment+"} SqlSessionFactory successfully.", environment);
+                logger.debug("Get {"+environment+"} SqlSessionFactory successfully.", environment);
             } catch (IOException e) {
-                logger.warn("Get {"+environment+"} SqlSessionFactory error.", environment);
-                logger.error(ExceptionInfoUtils.getExceptionCauseInfo(e));
+                throw new RuntimeException(e);
             }
             SQLSESSIONFACTORYS.put(environment, sqlSessionFactory);
             return sqlSessionFactory;
