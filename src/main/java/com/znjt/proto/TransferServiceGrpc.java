@@ -91,6 +91,38 @@ public final class TransferServiceGrpc {
      return getTransporterBySyncMethod;
   }
 
+  private static volatile io.grpc.MethodDescriptor<com.znjt.proto.SyncMulImgRequest,
+      com.znjt.proto.SyncMulImgResponse> getTransporterMulBySyncMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "transporterMulBySync",
+      requestType = com.znjt.proto.SyncMulImgRequest.class,
+      responseType = com.znjt.proto.SyncMulImgResponse.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<com.znjt.proto.SyncMulImgRequest,
+      com.znjt.proto.SyncMulImgResponse> getTransporterMulBySyncMethod() {
+    io.grpc.MethodDescriptor<com.znjt.proto.SyncMulImgRequest, com.znjt.proto.SyncMulImgResponse> getTransporterMulBySyncMethod;
+    if ((getTransporterMulBySyncMethod = TransferServiceGrpc.getTransporterMulBySyncMethod) == null) {
+      synchronized (TransferServiceGrpc.class) {
+        if ((getTransporterMulBySyncMethod = TransferServiceGrpc.getTransporterMulBySyncMethod) == null) {
+          TransferServiceGrpc.getTransporterMulBySyncMethod = getTransporterMulBySyncMethod = 
+              io.grpc.MethodDescriptor.<com.znjt.proto.SyncMulImgRequest, com.znjt.proto.SyncMulImgResponse>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(
+                  "com.znjt.proto.TransferService", "transporterMulBySync"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.znjt.proto.SyncMulImgRequest.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.znjt.proto.SyncMulImgResponse.getDefaultInstance()))
+                  .setSchemaDescriptor(new TransferServiceMethodDescriptorSupplier("transporterMulBySync"))
+                  .build();
+          }
+        }
+     }
+     return getTransporterMulBySyncMethod;
+  }
+
   /**
    * Creates a new async stub that supports all call types for the service
    */
@@ -132,6 +164,13 @@ public final class TransferServiceGrpc {
       asyncUnimplementedUnaryCall(getTransporterBySyncMethod(), responseObserver);
     }
 
+    /**
+     */
+    public void transporterMulBySync(com.znjt.proto.SyncMulImgRequest request,
+        io.grpc.stub.StreamObserver<com.znjt.proto.SyncMulImgResponse> responseObserver) {
+      asyncUnimplementedUnaryCall(getTransporterMulBySyncMethod(), responseObserver);
+    }
+
     @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
       return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
           .addMethod(
@@ -148,6 +187,13 @@ public final class TransferServiceGrpc {
                 com.znjt.proto.SyncDataRequest,
                 com.znjt.proto.SyncDataResponse>(
                   this, METHODID_TRANSPORTER_BY_SYNC)))
+          .addMethod(
+            getTransporterMulBySyncMethod(),
+            asyncUnaryCall(
+              new MethodHandlers<
+                com.znjt.proto.SyncMulImgRequest,
+                com.znjt.proto.SyncMulImgResponse>(
+                  this, METHODID_TRANSPORTER_MUL_BY_SYNC)))
           .build();
     }
   }
@@ -185,6 +231,14 @@ public final class TransferServiceGrpc {
       asyncUnaryCall(
           getChannel().newCall(getTransporterBySyncMethod(), getCallOptions()), request, responseObserver);
     }
+
+    /**
+     */
+    public void transporterMulBySync(com.znjt.proto.SyncMulImgRequest request,
+        io.grpc.stub.StreamObserver<com.znjt.proto.SyncMulImgResponse> responseObserver) {
+      asyncUnaryCall(
+          getChannel().newCall(getTransporterMulBySyncMethod(), getCallOptions()), request, responseObserver);
+    }
   }
 
   /**
@@ -210,6 +264,13 @@ public final class TransferServiceGrpc {
     public com.znjt.proto.SyncDataResponse transporterBySync(com.znjt.proto.SyncDataRequest request) {
       return blockingUnaryCall(
           getChannel(), getTransporterBySyncMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public com.znjt.proto.SyncMulImgResponse transporterMulBySync(com.znjt.proto.SyncMulImgRequest request) {
+      return blockingUnaryCall(
+          getChannel(), getTransporterMulBySyncMethod(), getCallOptions(), request);
     }
   }
 
@@ -238,10 +299,19 @@ public final class TransferServiceGrpc {
       return futureUnaryCall(
           getChannel().newCall(getTransporterBySyncMethod(), getCallOptions()), request);
     }
+
+    /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<com.znjt.proto.SyncMulImgResponse> transporterMulBySync(
+        com.znjt.proto.SyncMulImgRequest request) {
+      return futureUnaryCall(
+          getChannel().newCall(getTransporterMulBySyncMethod(), getCallOptions()), request);
+    }
   }
 
   private static final int METHODID_TRANSPORTER_BY_SYNC = 0;
-  private static final int METHODID_TRANSPORTER_BY_STREAM = 1;
+  private static final int METHODID_TRANSPORTER_MUL_BY_SYNC = 1;
+  private static final int METHODID_TRANSPORTER_BY_STREAM = 2;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -263,6 +333,10 @@ public final class TransferServiceGrpc {
         case METHODID_TRANSPORTER_BY_SYNC:
           serviceImpl.transporterBySync((com.znjt.proto.SyncDataRequest) request,
               (io.grpc.stub.StreamObserver<com.znjt.proto.SyncDataResponse>) responseObserver);
+          break;
+        case METHODID_TRANSPORTER_MUL_BY_SYNC:
+          serviceImpl.transporterMulBySync((com.znjt.proto.SyncMulImgRequest) request,
+              (io.grpc.stub.StreamObserver<com.znjt.proto.SyncMulImgResponse>) responseObserver);
           break;
         default:
           throw new AssertionError();
@@ -330,6 +404,7 @@ public final class TransferServiceGrpc {
               .setSchemaDescriptor(new TransferServiceFileDescriptorSupplier())
               .addMethod(getTransporterByStreamMethod())
               .addMethod(getTransporterBySyncMethod())
+              .addMethod(getTransporterMulBySyncMethod())
               .build();
         }
       }

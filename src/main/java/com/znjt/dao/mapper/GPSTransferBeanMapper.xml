@@ -120,7 +120,7 @@
         <!--</foreach>-->
     <!--</update>-->
 
-    <!--批量更新方式二：-->
+    <!--批量更新方式二：效率低-->
     <update id="updateCurrentUploadedSuccessGPSImgRecords" databaseId="mysql">
         update gps
         <trim prefix="set" suffixOverrides=",">
@@ -153,6 +153,34 @@
     <update id="updateGPSImgPath2DBRecord">
         update gps set basedir=#{baseDir}, ORIGINAL_URL=#{originalUrl} where dataId=#{dataid} and ORIGINAL_URL is null
     </update>
+
+    <!--批量更新图像地址信息-->
+    <update id="updateBatchGPSImgPath2DBRecord" databaseId="mysql">
+        <foreach collection="list" item="item"  separator=";">
+            update gps set basedir=#{item.baseDir},ORIGINAL_URL=#{item.originalUrl}  where dataid=#{item.dataid} and ORIGINAL_URL is null
+        </foreach>
+    </update>
+
+    <!--批量更新图像地址信息,效率低-->
+    <!--<update id="updateBatchGPSImgPath2DBRecord_bak" databaseId="mysql">-->
+        <!--update gps-->
+        <!--<trim prefix="set" suffixOverrides=",">-->
+            <!--<trim prefix="basedir = case" suffix="end,">-->
+                <!--<foreach collection="list" item="item" >-->
+                    <!--when dataid=#{item.dataid} and ORIGINAL_URL is null then #{item.baseDir}-->
+                <!--</foreach>-->
+            <!--</trim>-->
+            <!--<trim prefix=" ORIGINAL_URL = case" suffix="end,">-->
+                <!--<foreach collection="list" item="item" >-->
+                    <!--when dataid=#{item.dataid} and ORIGINAL_URL is null then #{item.originalUrl}-->
+                <!--</foreach>-->
+            <!--</trim>-->
+        <!--</trim>-->
+        <!--where-->
+        <!--<foreach collection="list" item="item" separator="," open=" dataId in (" close=")" >-->
+            <!--#{item.dataid}-->
+        <!--</foreach>-->
+    <!--</update>-->
 
     <insert databaseId="mysql" id="upLoadGPSRecordDatas2UpStream" keyProperty="id" >
        insert into gps (GPSID,COLLECT_TIME,STATUS,LATITUDE,LONGITUDE,SPEED,AZIMUTH,DECLINATION,CREATE_TIME,UPLOAD_TIME,RESULT,AREA,dataid,UPLOADSTATUS)

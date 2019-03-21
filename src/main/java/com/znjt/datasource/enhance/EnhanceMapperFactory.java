@@ -1,8 +1,5 @@
 package com.znjt.datasource.enhance;
 
-import com.znjt.exs.DBException;
-import com.znjt.exs.ExceptionInfoUtils;
-import org.apache.ibatis.executor.BatchResult;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -10,8 +7,6 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * MapperFactory 创建一个Mapper实例 mapper
@@ -20,8 +15,6 @@ import java.util.List;
  * Depart Tech
  */
 final public class EnhanceMapperFactory {
-
-    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(EnhanceMapperFactory.class);
 
     /**
      * 通过datasource 创建一个Mapper 的实现类 mapper
@@ -82,8 +75,6 @@ final public class EnhanceMapperFactory {
             try {
                 object = method.invoke(mapper, args);
             } catch (Exception e) {
-                e.printStackTrace();
-                logger.error(ExceptionInfoUtils.getExceptionCauseInfo(e));
                 throw new RuntimeException(e);
             }
             return object;

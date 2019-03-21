@@ -1,5 +1,6 @@
 package com.znjt.rpc;
 
+import com.znjt.boot.Boot;
 import com.znjt.exs.ExceptionInfoUtils;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -25,7 +26,7 @@ public class TransporterServer {
             logger.info("Begin Start RPC Server At " + RPC_PORT + " .");
         }
         transporterServer = new TransferProtoImpl4Server();
-        server = ServerBuilder.forPort(RPC_PORT).addService(transporterServer).build().start();
+        server = ServerBuilder.forPort(RPC_PORT).addService(transporterServer).maxInboundMessageSize(Boot.FRAME_MAX_SIXE).build().start();
         if (logger.isInfoEnabled()) {
             logger.info("RPC Server Started Bind At " + RPC_PORT + " .");
         }

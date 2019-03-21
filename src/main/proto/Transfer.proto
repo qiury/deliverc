@@ -10,6 +10,7 @@ option java_multiple_files = true;
 service TransferService{
     rpc transporterByStream(stream SyncDataRequest) returns (stream SyncDataResponse){}
     rpc transporterBySync(SyncDataRequest) returns (SyncDataResponse){}
+    rpc transporterMulBySync(SyncMulImgRequest) returns (SyncMulImgResponse){}
 }
 
 enum DataType{
@@ -17,7 +18,21 @@ enum DataType{
     T_GPS = 1;
 }
 
-message SyncDataRequest{
+
+
+//请求响应对象
+message SyncMulImgResponse{
+    DataType data_type = 1;
+    repeated GPSRecord gps_record = 3;
+}
+
+message SyncMulImgRequest{
+    DataType data_type = 1;
+    repeated GPSRecord gps_record = 3;
+}
+
+
+message ImageDataRequest{
     DataType data_type = 1;
     oneof record{
         INIRecord ini_record = 2;
@@ -27,7 +42,7 @@ message SyncDataRequest{
 }
 
 //请求响应对象
-message SyncDataResponse{
+message ImageDataResponse{
     DataType data_type = 1;
     oneof record{
         INIRecord ini_record = 2;

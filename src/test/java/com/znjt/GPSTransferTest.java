@@ -149,7 +149,7 @@ public class GPSTransferTest {
                         x.setOriginalUrl(filePath);
                         x.setDataid(Instant.now().toString());
                     });
-                    client.uploadBigDataByRPC(item);
+                    client.uploadBigDataByRPC(item,false);
                 });
             }
         });

@@ -1,7 +1,7 @@
 package com.znjt.rpc;
 
 import com.google.protobuf.ByteString;
-import com.znjt.CommonFileUitls;
+import com.znjt.utils.CommonFileUitls;
 import com.znjt.boot.Boot;
 import com.znjt.dao.beans.GPSTransferIniBean;
 import com.znjt.exs.ExceptionInfoUtils;
@@ -11,6 +11,8 @@ import com.znjt.utils.FileIOUtils;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 
 /**
@@ -22,10 +24,25 @@ import org.slf4j.LoggerFactory;
  */
 public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServiceImplBase {
     private static Logger logger = LoggerFactory.getLogger(TransferProtoImpl4Server.class);
-    private static final String BASE_DIR = CommonFileUitls.getProjectPath();
+    public static final String BASE_DIR = CommonFileUitls.getProjectPath();
     private GPSTransferService gpsTransferService = new GPSTransferService();
     static {
         FileIOUtils.init_fs_dirs(BASE_DIR,"/fs/");
+    }
+
+    /**
+     * 同步批处理
+     * @param request
+     * @param responseObserver
+     */
+    @Override
+    public void transporterMulBySync(SyncMulImgRequest request, StreamObserver<SyncMulImgResponse> responseObserver) {
+        if(request.getDataType()==DataType.T_GPS){
+            List<GPSRecord> records = ImageUpLoadProcssor.processGPSRecord(request.getGpsRecordList(),gpsTransferService);
+            SyncMulImgResponse syncMulImgResponse = SyncMulImgResponse.newBuilder().setDataType(DataType.T_GPS).addAllGpsRecord(records).build();
+            responseObserver.onNext(syncMulImgResponse);
+        }
+        responseObserver.onCompleted();
     }
 
     /**
@@ -67,7 +84,6 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
         //GPS表
         if (syncDataRequest.getDataType() == DataType.T_GPS) {
             GPSRecord gpsRecord = syncDataRequest.getGpsRecord();
-
             //处理客户端图像
             String dataId = gpsRecord.getDataId();
             ByteString byteString = gpsRecord.getImgData();
@@ -80,7 +96,6 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
                 img_err = true;
             } else {
                 img_err = false;
-
                 byte[] imgs = byteString.toByteArray();
                 String sub_path = FileIOUtils.createRelativePath4Image(gpsRecord.getDataId());
                 String path = BASE_DIR + sub_path;
@@ -113,8 +128,6 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
                     .setGpsRecord(record)
                     .build();
             responseObserver.onNext(response);
-        } else if (syncDataRequest.getDataType() == DataType.T_INI) {
-
         }
     }
 

@@ -1,6 +1,4 @@
-package com.znjt;
-
-import com.znjt.boot.Boot;
+package com.znjt.utils;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;

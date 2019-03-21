@@ -1,5 +1,6 @@
 package com.znjt.rpc;
 
+import com.znjt.boot.Boot;
 import com.znjt.dao.beans.GPSTransferIniBean;
 import com.znjt.exs.ExceptionInfoUtils;
 import com.znjt.proto.DataType;
@@ -74,17 +75,9 @@ public class TransferRespJobUtils {
                                 //处理服务端发送的响应
                                 DataType dataType = request.getDataType();
                                 if (dataType == DataType.T_GPS) {
-
                                     GPSRecord gpsRecord = request.getGpsRecord();
-                                    String cid = gpsRecord.getClientRecordId();
-                                    String did = gpsRecord.getDataId();
-                                    boolean file_err = gpsRecord.getFileErr();
-                                    boolean opsres = gpsRecord.getServOpsRes();
-                                    if(opsres) {
-                                        gpsTransferIniBean = new GPSTransferIniBean();
-                                        gpsTransferIniBean.setGpsid(cid);
-                                        gpsTransferIniBean.setFile_err(file_err);
-                                        gpsTransferIniBean.setImg_uploaded(opsres);
+                                    gpsTransferIniBean = createGPSGpsTransferIniBeanFromGPSRecord(gpsRecord);
+                                    if(gpsTransferIniBean!=null){
                                         datas.add(gpsTransferIniBean);
                                     }
                                 }
@@ -93,7 +86,7 @@ public class TransferRespJobUtils {
                                 if(logger.isDebugEnabled()) {
                                     logger.debug("客户端图像上传结果工作线程 : 开始更新Master数据库中记录的状态，任务个数="+datas.size());
                                 }
-                                localTransferService.updateCurrentUploadedSuccessGPSImgRecords("master",datas);
+                                localTransferService.updateCurrentUploadedSuccessGPSImgRecords(Boot.DOWNSTREAM_DBNAME,datas);
                             }
                         } else {
                             synchronized (monitor) {
@@ -115,6 +108,26 @@ public class TransferRespJobUtils {
     }
 
     /**
+     * 根据gpsrecord创建GPSTransferIniBean对象
+     * @param gpsRecord
+     * @return
+     */
+    public GPSTransferIniBean createGPSGpsTransferIniBeanFromGPSRecord(GPSRecord gpsRecord){
+        String cid = gpsRecord.getClientRecordId();
+        String did = gpsRecord.getDataId();
+        boolean file_err = gpsRecord.getFileErr();
+        boolean opsres = gpsRecord.getServOpsRes();
+        GPSTransferIniBean gpsTransferIniBean = null;
+        //后台成功进行了处理的记录才会被更新
+        if(opsres) {
+            gpsTransferIniBean = new GPSTransferIniBean();
+            gpsTransferIniBean.setGpsid(cid);
+            gpsTransferIniBean.setFile_err(file_err);
+            gpsTransferIniBean.setImg_uploaded(opsres);
+        }
+        return  gpsTransferIniBean;
+    }
+    /**
      * 开始任务
      */
     private void startJob(Runnable runnable) {
@@ -131,9 +144,21 @@ public class TransferRespJobUtils {
         if (!jobs.isEmpty()) {
             int index = 0;
             SyncDataResponse response;
+            int try_times = 1;
             while (index < max_batch_size) {
                 if(jobs.isEmpty()){
-                    break;
+                    /*
+                      因为服务端是逐个返回处理结果的，
+                      因此在没有获取到任务时，尝试等待一段时间，
+                      尽量批处理任务.
+                      注意：这个等待时间不能太长，否则会造成客户端重复上传的问题出现
+                     */
+                   // wait4uint();
+                    try_times--;
+                    if(try_times<=0){
+                        break;
+                    }
+                    continue;
                 }
                 response = jobs.poll();
                 if(response==null){
@@ -144,6 +169,16 @@ public class TransferRespJobUtils {
             }
         }
         return tasks;
+    }
+
+    /**
+     * 等待一个单元
+     */
+    private void wait4uint(){
+        try {
+            Thread.sleep(200);
+        }catch (Exception ex){
+        }
     }
 
     /**

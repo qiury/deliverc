@@ -24,8 +24,6 @@ public class GPSTransferDao {
             SqlSession sqlSession = EnhanceMapperFactory.getMultiSqlSession(dbname, true);
             GPSTransferBeanMapper mapper = EnhanceMapperFactory.createMapper(GPSTransferBeanMapper.class, sqlSession);
             recordDatas = mapper.findUnUpLoadGPSRecordDatas(pageSize);
-        } catch (Exception e) {
-            new DBException(e,"查询未上传的GPS记录出现异常");
         } finally {
             EnhanceDbUtils.closeSession();
         }
@@ -38,9 +36,7 @@ public class GPSTransferDao {
             SqlSession sqlSession = EnhanceMapperFactory.getMultiSqlSession(dbname, true);
             GPSTransferBeanMapper mapper = EnhanceMapperFactory.createMapper(GPSTransferBeanMapper.class, sqlSession);
             recordDatas = mapper.findUnUpLoadGPSImgDatas(pageSize);
-        } catch (Exception e) {
-            new RuntimeException("查询未上传图像的GPS记录出现异常",e);
-        } finally {
+        }  finally {
             EnhanceDbUtils.closeSession();
         }
         return recordDatas;
@@ -52,8 +48,6 @@ public class GPSTransferDao {
             GPSTransferBeanMapper mapper = EnhanceMapperFactory.createMapper(GPSTransferBeanMapper.class, sqlSession);
             mapper.updateCurrentUpLoadedSuccessGPSRescords(gpsTransferIniBeans);
             sqlSession.commit();
-        } catch (Exception e) {
-            new DBException(e,"更新已经上传的GPS记录状态出现异常");
         } finally {
             EnhanceDbUtils.closeSession();
         }
@@ -66,8 +60,6 @@ public class GPSTransferDao {
             GPSTransferBeanMapper mapper = EnhanceMapperFactory.createMapper(GPSTransferBeanMapper.class, sqlSession);
             mapper.updateCurrentUploadedSuccessGPSImgRecords(gpsTransferIniBeans);
             sqlSession.commit();
-        } catch (Exception e) {
-            new DBException(e,"更新已经上传的GPS图像状态出现异常");
         } finally {
             EnhanceDbUtils.closeSession();
         }
@@ -79,8 +71,6 @@ public class GPSTransferDao {
             GPSTransferBeanMapper mapper = EnhanceMapperFactory.createMapper(GPSTransferBeanMapper.class, sqlSession);
             mapper.upLoadGPSRecordDatas2UpStream(gpsTransferIniBeans);
             sqlSession.commit();
-        } catch (Exception e) {
-            new DBException(e,"更新已经上传的GPS图像状态出现异常");
         } finally {
             EnhanceDbUtils.closeSession();
         }
@@ -92,17 +82,26 @@ public class GPSTransferDao {
      * @param gpsTransferIniBean
      */
     public int updateGPSImgPath2DBRecord(String dbname,GPSTransferIniBean gpsTransferIniBean){
+        int updated = 0;
         try {
             SqlSession sqlSession = EnhanceMapperFactory.getMultiSqlSession(dbname, false);
             GPSTransferBeanMapper mapper = EnhanceMapperFactory.createMapper(GPSTransferBeanMapper.class, sqlSession);
-            int updated = mapper.updateGPSImgPath2DBRecord(gpsTransferIniBean);
+            updated = mapper.updateGPSImgPath2DBRecord(gpsTransferIniBean);
             sqlSession.commit();
-            return updated;
-        } catch (Exception e) {
-            new DBException(e,"更新GPS接收到的图像存储路径到数据库出现异常");
         } finally {
             EnhanceDbUtils.closeSession();
         }
-        return 0;
+        return updated;
+    }
+
+    public void updateBatchGPSImgPath2DBRecord(String dbname,List<GPSTransferIniBean> gpsTransferIniBeans){
+        try {
+            SqlSession sqlSession = EnhanceMapperFactory.getMultiSqlSession(dbname, false);
+            GPSTransferBeanMapper mapper = EnhanceMapperFactory.createMapper(GPSTransferBeanMapper.class, sqlSession);
+            mapper.updateBatchGPSImgPath2DBRecord(gpsTransferIniBeans);
+            sqlSession.commit();
+        } finally {
+            EnhanceDbUtils.closeSession();
+        }
     }
 }

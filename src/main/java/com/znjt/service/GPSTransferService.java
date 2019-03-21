@@ -2,15 +2,6 @@ package com.znjt.service;
 
 import com.znjt.dao.beans.GPSTransferIniBean;
 import com.znjt.dao.impl.GPSTransferDao;
-import com.znjt.dao.mapper.GPSTransferBeanMapper;
-import com.znjt.datasource.enhance.EnhanceDbUtils;
-import com.znjt.datasource.enhance.EnhanceMapperFactory;
-import com.znjt.exs.DBException;
-import org.apache.ibatis.session.ExecutorType;
-import org.apache.ibatis.session.SqlSession;
-import org.junit.Assert;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Objects;
@@ -80,6 +71,10 @@ public class GPSTransferService {
 
     public int updateGPSImgPath2DBRecord(String dbName,GPSTransferIniBean gpsTransferIniBean){
         return dao.updateGPSImgPath2DBRecord(dbName,gpsTransferIniBean);
+    }
+
+    public void updateBatchGPSImgPath2DBRecord(String dbName,List<GPSTransferIniBean> gpsTransferIniBeans){
+        dao.updateBatchGPSImgPath2DBRecord(dbName,gpsTransferIniBeans);
     }
 
 

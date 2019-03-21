@@ -146,14 +146,23 @@ public class ClientBoot {
      * 检查gps中未上传的img信息
      */
     private void start_monitor_gps_img() {
+        //当前执行到第几层
+        long invoke_time = 0;
+        boolean by_sync_single = true;
         logger.info("检查是否存在要上传的gps图像数据...");
         List<GPSTransferIniBean> recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas(Boot.DOWNSTREAM_DBNAME, Boot.IMAGE_BATCH_SIZE);
+        invoke_time++;
         while (recordDatas != null && recordDatas.size() > 0) {
-            Optional.ofNullable(recordDatas).ifPresent(item -> {
-                logger.info("开始上传gps图像数据...[" + item.size() + "]条");
-                client.uploadBigDataByRPC(item);
-            });
+            logger.info("开始上传gps图像数据...[" + recordDatas.size() + "]条");
+            client.uploadBigDataByRPC(recordDatas,by_sync_single);
             recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas(Boot.DOWNSTREAM_DBNAME, Boot.IMAGE_BATCH_SIZE);
+            invoke_time++;
+            /*
+              前2次采用同步单条方式传输，防止前期没有来得及更新的数据造成了图像重复存储，造成服务器端出现僵尸数据
+             */
+            if(invoke_time>Boot.PRE_UPLOAD_IMAGE_BY_SYNC_SINGLE_TIMES){
+                by_sync_single = false;
+            }
             if (!net_allowed_connect||exit_sys_stauts) {
                 break;
             }

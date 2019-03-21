@@ -32,6 +32,9 @@ public class GPSTransferIniBean {
     //根目录
     private String baseDir;
 
+    private String clientRecordId;
+    private String file_full_path;
+
 
     public String getGpsid() {
         return gpsid;
@@ -175,6 +178,22 @@ public class GPSTransferIniBean {
 
     public void setBaseDir(String baseDir) {
         this.baseDir = baseDir;
+    }
+
+    public String getClientRecordId() {
+        return clientRecordId;
+    }
+
+    public void setClientRecordId(String clientRecordId) {
+        this.clientRecordId = clientRecordId;
+    }
+
+    public String getFile_full_path() {
+        return file_full_path;
+    }
+
+    public void setFile_full_path(String file_full_path) {
+        this.file_full_path = file_full_path;
     }
 
     @Override

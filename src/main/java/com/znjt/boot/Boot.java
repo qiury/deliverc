@@ -1,16 +1,11 @@
 package com.znjt.boot;
 
-import com.znjt.CommonFileUitls;
 import com.znjt.exs.ExceptionInfoUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.io.Resources;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.util.Properties;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,9 +22,13 @@ public class Boot {
     //源数据源名称
     public static final String DOWNSTREAM_DBNAME = "master";
     //普通记录批处理大小
-    public static final int RECORD_BATCH_SIZE = 500;
+    public static int RECORD_BATCH_SIZE = 500;
     //图像记录批处理大小
-    public static final int IMAGE_BATCH_SIZE = 50;
+    public static int IMAGE_BATCH_SIZE = 50;
+    //数据帧准许的最大值
+    public static int FRAME_MAX_SIXE = 40*1024*1024;
+    //每次开始上传图像任务时，前面几次采用Stream方式上传数据
+    public static int PRE_UPLOAD_IMAGE_BY_SYNC_SINGLE_TIMES = 2;
 
     private static boolean is_server = false;
     private static ClientBoot clientBoot;
@@ -42,11 +41,43 @@ public class Boot {
     public static void main(String[] args) throws Exception{
         try {
             Properties properties = read_sys_cfg();
+            init(properties);
             read_opt_from_terminal(properties);
         }catch (Exception ex){
             System.err.println(ExceptionInfoUtils.getExceptionCauseInfo(ex));
             Runtime.getRuntime().halt(-1);
         }
+    }
+
+    /**
+     * 覆盖默认参数
+     * @param properties
+     */
+    private static void init(Properties properties){
+        Optional.ofNullable(properties).ifPresent(prop->{
+            String param = prop.getProperty("record_batch_size");
+
+            if(StringUtils.isNotEmpty(param)){
+                param = param.trim();
+                if(isNumeric(param)){
+                    RECORD_BATCH_SIZE = Integer.parseInt(param);
+                }
+            }
+            param = prop.getProperty("image_batch_size");
+            if(StringUtils.isNoneEmpty(param)){
+                param = param.trim();
+                if(isNumeric(param)){
+                    IMAGE_BATCH_SIZE = Integer.parseInt(param);
+                }
+            }
+            param = prop.getProperty("frame_max_size");
+            if(StringUtils.isNotBlank(param)){
+                param = param.trim();
+                if(isNumeric(param)){
+                    FRAME_MAX_SIXE = Integer.parseInt(param)*1024*1024;
+                }
+            }
+        });
     }
 
     /**
@@ -61,6 +92,7 @@ public class Boot {
             String _port = null;//绑定的端口
             String _ip = null;//连接的端口
             System.err.println("欢迎使用数据同步系统，请您选择要启动的功能名称,请输入ser[ver]或cli[ent] ");
+            String appName = "[Server]";
             while (scanner.hasNextLine()) {
                 String str = scanner.nextLine();
                 if("exit".equals(str.trim())){
@@ -68,6 +100,7 @@ public class Boot {
                 }
                 //说明启动的是客户端程序
                 if(str.trim().startsWith("cli")){
+                    appName = "[Client]";
                     _ip = read_ip_from_cmd(scanner);
                     _port = read_port_from_cmd(scanner);
                     if(!_ip.isEmpty()){
@@ -102,7 +135,7 @@ public class Boot {
                 }
 
             }
-            start_monitor_user_controll(scanner);
+            start_monitor_user_controll(appName,scanner);
         }catch (Exception ex){
             ex.printStackTrace();
         }finally {
@@ -115,14 +148,16 @@ public class Boot {
     /**
      * 启动监听用户输入的请求
      */
-    private static void start_monitor_user_controll(Scanner scanner){
-        System.err.println("输入exit/quit/close退出程序 ");
+    private static void start_monitor_user_controll(String appName, Scanner scanner){
+        System.err.println(appName + " Starting ...... \r\n输入exit(e)/quit(q)/close(c)退出程序 ");
+        List<String> exit_cmds = Arrays.asList("e","c","q","quit","close","exit");
+
         while (scanner.hasNextLine()) {
-            String str = scanner.nextLine();
-            if(str.trim().equals("quit")||str.trim().equals("close")||str.trim().equals("exit")){
+            String cmd = scanner.nextLine();
+            if(exit_cmds.contains(cmd)){
                 break;
             }
-            System.err.println("输入exit/quit/close退出程序 ");
+            System.err.println("输入exit(e)/quit(q)/close(c)退出程序 ");
         }
         System.err.println("系统即将退出，启动释放资源的操作..");
         relese_resource();
@@ -263,6 +298,4 @@ public class Boot {
         }
         return properties;
     }
-
-
 }

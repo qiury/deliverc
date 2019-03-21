@@ -2,6 +2,8 @@ package com.znjt.rpc;
 
 import com.znjt.dao.beans.GPSTransferIniBean;
 import com.znjt.service.GPSTransferService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,20 +15,35 @@ import java.util.Optional;
  */
 public class TransportClient {
     private TransporterClientProxy transporterClientProxy;
-
+    private Logger logger = LoggerFactory.getLogger(TransportClient.class);
     public TransportClient(GPSTransferService localTransferService, String addr, int port, int max_batch_size) {
         transporterClientProxy = new TransporterClientProxy(localTransferService, addr, port, max_batch_size);
         createShutdownHook();
     }
 
-    public void uploadBigDataByRPC(List<GPSTransferIniBean> gpsTransferIniBeans) {
+    /**
+     * 是否通过流的方式上传图像（优点，具有数据去重功能。缺点，效率比批处理低）
+     * @param gpsTransferIniBeans
+     * @param by_sync_single 同步单条的方式上传数据
+     */
+    public void uploadBigDataByRPC(List<GPSTransferIniBean> gpsTransferIniBeans,boolean by_sync_single) {
         if (gpsTransferIniBeans != null && gpsTransferIniBeans.size() > 0) {
             gpsTransferIniBeans.forEach(item -> {
                 if (item.getDataid() == null) {
                     item.setDataid(item.getStatus() + "&" + item.getGpsid());
                 }
             });
-            transporterClientProxy.transferData2Server(gpsTransferIniBeans);
+            if(by_sync_single){
+                logger.debug("同步 {单条} 方式上传数据");
+                //通过同步单条的方式处理
+                transporterClientProxy.transferData2ServerBySync(gpsTransferIniBeans);
+
+            }else {
+                logger.debug("同步 {批量} 方式上传数据");
+                //通过同步批处理方式发送数据
+                transporterClientProxy.transferData2ServerBySync4Batch(gpsTransferIniBeans);
+            }
+
         }
     }
 
