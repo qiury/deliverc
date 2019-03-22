@@ -34,6 +34,7 @@ public class ClientBoot {
     private ACCTransferService accTransferService;
     private GPSTransferService gpsTransferService;
     private TransportClient client;
+    private static  boolean RATE_LIMITING = true;
 
 
     /**
@@ -53,6 +54,7 @@ public class ClientBoot {
 
 
     private void init() {
+        RATE_LIMITING = Boot.expire();
         accTransferService = new ACCTransferService();
         gpsTransferService = new GPSTransferService();
         client = new TransportClient(gpsTransferService, server_ip, server_port, Boot.IMAGE_BATCH_SIZE);
@@ -153,6 +155,7 @@ public class ClientBoot {
         List<GPSTransferIniBean> recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas(Boot.DOWNSTREAM_DBNAME, Boot.IMAGE_BATCH_SIZE);
         invoke_time++;
         while (recordDatas != null && recordDatas.size() > 0) {
+            limiting();
             logger.info("开始上传gps图像数据...[" + recordDatas.size() + "]条");
             client.uploadBigDataByRPC(recordDatas,by_sync_single);
             recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas(Boot.DOWNSTREAM_DBNAME, Boot.IMAGE_BATCH_SIZE);
@@ -177,6 +180,7 @@ public class ClientBoot {
         logger.info("检查是否存在要上传的gps记录数据...");
         List<GPSTransferIniBean> recordDatas = gpsTransferService.findUnUpLoadGPSRecordDatas(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
         while (recordDatas != null && recordDatas.size() > 0) {
+            limiting();
             logger.info("开始批量上传GPS记录[" + recordDatas.size() + "]条");
             gpsTransferService.upLoadGPSRecordDatas2UpStream(Boot.UPSTREAM_DBNAME, recordDatas);
             gpsTransferService.updateCurrentUpLoadedSuccessGPSRescords(Boot.DOWNSTREAM_DBNAME, recordDatas);
@@ -195,6 +199,7 @@ public class ClientBoot {
         logger.info("检查是否存在要上传的ACC记录数据...");
         List<ACCTransferIniBean> recordDatas = accTransferService.findUnUpLoadACCRecordDatas(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
         while (recordDatas != null && recordDatas.size() > 0) {
+            limiting();
             logger.info("开始批量上传ACC记录[" + recordDatas.size() + "]条");
             accTransferService.upLoadACCRecordDatas2UpStream(Boot.UPSTREAM_DBNAME, recordDatas);
             accTransferService.updateCurrentUpLoadedSuccessACCRescords(Boot.DOWNSTREAM_DBNAME, recordDatas);
@@ -207,6 +212,15 @@ public class ClientBoot {
         logger.info("没有ACC记录数据需要上传...");
     }
 
+    private void limiting(){
+        if(RATE_LIMITING){
+            try {
+                Thread.sleep(ThreadLocalRandom.current().nextInt(5000,10000));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     /**
      * The default thread factory

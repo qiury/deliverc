@@ -22,9 +22,6 @@ public class FileIOUtils {
      */
     public static byte[] getImgBytesDataFromPath(String path){
         byte[] bytes = null;
-        if(path==null||path.trim().equals("")){
-            path = "/Users/qiuzx/IdeaProjects/qiuzx/deliverc/imgs/ai.png";
-        }
         if(path!=null){
             try(InputStream is = new FileInputStream(path)){
                 bytes = new byte[is.available()];

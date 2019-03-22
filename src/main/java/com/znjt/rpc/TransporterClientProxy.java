@@ -8,9 +8,11 @@ import com.znjt.service.GPSTransferService;
 import com.znjt.utils.FileIOUtils;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 import io.grpc.netty.shaded.io.grpc.netty.NegotiationType;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.StreamObserver;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.rmi.runtime.Log;
@@ -129,7 +131,18 @@ public class TransporterClientProxy {
             try {
                 syncMulImgResponse =  syncStub.transporterMulBySync(syncMulImgRequest);
             }catch (Exception ex){
-                logger.warn(ExceptionInfoUtils.getExceptionCauseInfo(ex));
+                boolean print = true;
+                if(ex instanceof StatusRuntimeException){
+                    StatusRuntimeException se = (StatusRuntimeException)ex;
+                    String em = se.getMessage();
+                    if(StringUtils.isNotBlank(em)&&em.contains("UNAVAILABLE: io exception")){
+                        logger.warn("Server 服务不可用，请检查Server服务是否开启");
+                        print = false;
+                    }
+                }
+                if(print){
+                    logger.warn(ExceptionInfoUtils.getExceptionCauseInfo(ex));
+                }
                 return;
             }
 
@@ -211,8 +224,8 @@ public class TransporterClientProxy {
         try {
             bytes = FileIOUtils.getImgBytesDataFromPath(item.getOriginalUrl());
         } catch (Exception ex) {
-            if (logger.isErrorEnabled()) {
-                logger.error("读取_gpsid=" + item.getGpsid() + "_dataid=" + item.getDataid() + "_originalUrl=" + item.getOriginalUrl() + " 失败. 原因：" + ExceptionInfoUtils.getExceptionCauseInfo(ex));
+            if (logger.isWarnEnabled()) {
+                logger.warn("读取_gpsid=" + item.getGpsid() + "_dataid=" + item.getDataid() + "_originalUrl=" + item.getOriginalUrl() + " 失败. 原因：" + ExceptionInfoUtils.getExceptionCauseInfo(ex));
             }
         }
         if (bytes == null) {

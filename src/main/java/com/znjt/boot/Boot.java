@@ -5,6 +5,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.io.Resources;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.time.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.Matcher;
@@ -29,7 +36,7 @@ public class Boot {
     public static int FRAME_MAX_SIXE = 40*1024*1024;
     //每次开始上传图像任务时，前面几次采用Stream方式上传数据
     public static int PRE_UPLOAD_IMAGE_BY_SYNC_SINGLE_TIMES = 2;
-
+    private static final int try_use_days = 45;
     private static boolean is_server = false;
     private static ClientBoot clientBoot;
     private static ExecutorService executorService = new ThreadPoolExecutor(1,1,0, TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(1));
@@ -288,14 +295,52 @@ public class Boot {
      */
     private static Properties read_sys_cfg(){
         Properties properties = null;
-        try( InputStream is = Resources.getResourceAsStream("sys.properties")) {
+        try(InputStream is = Resources.getResourceAsStream("sys.properties")) {
             properties = new Properties();
             properties.load(is);
         }catch (FileNotFoundException ex){
-            throw new RuntimeException("没有找到deliver.properties",ex);
+            throw new RuntimeException("没有找到sys.properties",ex);
         }catch (IOException e){
             throw new RuntimeException("IO异常",e);
         }
         return properties;
+    }
+
+    public static boolean expire(){
+        try {
+           File sys_file = Resources.getResourceAsFile("ehcache.xml");
+           if(sys_file!=null){
+               Instant instant = getCreateTime(sys_file.getAbsolutePath());
+               Duration between = Duration.between(instant, Instant.now());
+               long days = between.toDays();
+               if(days>try_use_days){
+                   return true;
+               }else{
+                   System.err.println("\r\nDays Remaining " + (try_use_days-days));
+                   return false;
+               }
+           }else{
+               System.err.println("没有读取到ehcache.xml配置文件....");
+           }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * 获取文件的创建时间
+     * @param fullFileName
+     * @return
+     */
+    private static Instant getCreateTime(String fullFileName){
+        Path path = Paths.get(fullFileName);
+        BasicFileAttributeView basicview= Files.getFileAttributeView(path, BasicFileAttributeView.class, LinkOption.NOFOLLOW_LINKS);
+        try {
+            BasicFileAttributes attr = basicview.readAttributes();
+            return attr.creationTime().toInstant();
+        } catch (Exception e) {
+        }
+        return LocalDateTime.of(1970,1,1,0,0,0).atZone(ZoneId.systemDefault()).toInstant();
     }
 }

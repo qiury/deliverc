@@ -32,7 +32,7 @@ message SyncMulImgRequest{
 }
 
 
-message ImageDataRequest{
+message SyncDataRequest{
     DataType data_type = 1;
     oneof record{
         INIRecord ini_record = 2;
@@ -42,7 +42,7 @@ message ImageDataRequest{
 }
 
 //请求响应对象
-message ImageDataResponse{
+message SyncDataResponse{
     DataType data_type = 1;
     oneof record{
         INIRecord ini_record = 2;

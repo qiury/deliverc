@@ -1,4 +1,99 @@
-数据库修改
+数据库后台参数优化
+[mysqld]
+max_allowed_packet = 32M
+binlog_cache_size = 1M
+read_buffer_size = 64M
+sort_buffer_size = 8M
+query_cache_size = 8M
+query_cache_limit = 2M
+transaction_isolation = READ-COMMITTED
+#超过30天的binlog删除
+expire_logs_days = 30
+#InnoDB为独立表空间模式，每个数据库的每个表都会生成一个数据空间
+innodb_file_per_table = 1
+#限制Innodb能打开的表的数据，如果库里的表特别多的情况，请增加这个,默认是300
+innodb_open_files = 500
+
+# InnoDB使用一个缓冲池来保存索引和原始数据这里你设置越大,你在存取表里面数据时所需要的磁盘I/O越少.
+# 在一个独立使用的数据库服务器上,你可以设置这个变量到服务器物理内存大小的80%
+# 不要设置过大,否则,由于物理内存的竞争可能导致操作系统的换页颠簸.
+innodb_buffer_pool_size =  2G
+#在高写入负载尤其是大数据集的情况下很重要,这个值越大则性能相对越高，但是要注意到可能会增加恢复时间,常设置为64-512MB，根据服务器大小而异。
+innodb_log_file_size = 256M
+#默认的设置在中等强度写入负载以及较短事务的情况下，服务器性能还可以,通常8-16MB就足够了
+innodb_log_buffer_size =16M
+
+read_buffer_size = 4M
+
+# 为提高性能，MySQL可以以循环方式将日志文件写到多个文件,推荐设置为3
+innodb_log_files_in_group = 3
+
+内存4G的例子：
+[client]
+port        = 3306
+socket      = /tmp/mysql.sock
+
+[mysqld]
+port        = 3306
+socket      = /tmp/mysql.sock
+user    = mariadb
+basedir = /usr/local/mariadb
+datadir = /data/mysql
+log_error = /data/mysql/mariadb.err
+pid-file = /data/mysql/mariadb.pid
+skip-external-locking
+key_buffer_size = 64M
+max_allowed_packet = 1M
+table_open_cache = 256
+sort_buffer_size = 1M
+net_buffer_length = 8K
+read_buffer_size = 1M
+read_rnd_buffer_size = 512K
+myisam_sort_buffer_size = 16M
+thread_cache_size = 32
+query_cache_size = 32M
+tmp_table_size = 64M
+
+explicit_defaults_for_timestamp = true
+#skip-networking
+max_connections = 500
+max_connect_errors = 100
+open_files_limit = 65535
+
+log-bin=mysql-bin
+binlog_format=mixed
+server-id   = 1
+expire_logs_days = 10
+
+default_storage_engine = InnoDB
+innodb_file_per_table = 1
+innodb_data_home_dir = /data/mysql
+innodb_data_file_path = ibdata1:10M:autoextend
+innodb_log_group_home_dir = /data/mysql
+innodb_buffer_pool_size = 256M
+innodb_log_file_size = 64M
+innodb_log_buffer_size = 8M
+innodb_flush_log_at_trx_commit = 1
+innodb_lock_wait_timeout = 50
+
+[mysqldump]
+quick
+max_allowed_packet = 16M
+
+[mysql]
+no-auto-rehash
+
+[myisamchk]
+key_buffer_size = 64M
+sort_buffer_size = 1M
+read_buffer = 2M
+write_buffer = 2M
+
+[mysqlhotcopy]
+interactive-timeout
+
+
+数据库结构修改
 0. 修改数据的隔离级别
 select @@global.tx_isolation,@@tx_isolation;
 set session tx_isolation='read-committed';
