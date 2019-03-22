@@ -67,7 +67,7 @@ public class GPSTransferDao {
 
     public void upLoadGPSRecordDatas2UpStream(String dbname,List<GPSTransferIniBean> gpsTransferIniBeans) {
         try {
-            SqlSession sqlSession = EnhanceMapperFactory.getMultiSqlSession(dbname, false, ExecutorType.BATCH);
+            SqlSession sqlSession = EnhanceMapperFactory.getMultiSqlSession(dbname, false);
             GPSTransferBeanMapper mapper = EnhanceMapperFactory.createMapper(GPSTransferBeanMapper.class, sqlSession);
             mapper.upLoadGPSRecordDatas2UpStream(gpsTransferIniBeans);
             sqlSession.commit();
