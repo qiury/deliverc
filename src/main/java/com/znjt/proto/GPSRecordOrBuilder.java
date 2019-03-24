@@ -33,12 +33,25 @@ public interface GPSRecordOrBuilder extends
   boolean getServOpsRes();
 
   /**
-   * <code>bytes img_data = 4;</code>
+   * <code>repeated bytes img_data = 4;</code>
    */
-  com.google.protobuf.ByteString getImgData();
+  java.util.List<com.google.protobuf.ByteString> getImgDataList();
+  /**
+   * <code>repeated bytes img_data = 4;</code>
+   */
+  int getImgDataCount();
+  /**
+   * <code>repeated bytes img_data = 4;</code>
+   */
+  com.google.protobuf.ByteString getImgData(int index);
 
   /**
    * <code>bool file_err = 5;</code>
    */
   boolean getFileErr();
+
+  /**
+   * <code>int32 losted_size = 6;</code>
+   */
+  int getLostedSize();
 }

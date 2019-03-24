@@ -79,50 +79,46 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
         return streamObserver;
     }
 
-
+    /**
+     * 具有去重功能
+     * @param syncDataRequest
+     * @param responseObserver
+     */
     private void doneClientRequest(SyncDataRequest syncDataRequest, StreamObserver<SyncDataResponse> responseObserver) {
         //GPS表
         if (syncDataRequest.getDataType() == DataType.T_GPS) {
             GPSRecord gpsRecord = syncDataRequest.getGpsRecord();
             //处理客户端图像
             String dataId = gpsRecord.getDataId();
-            ByteString byteString = gpsRecord.getImgData();
+            List<ByteString> imgDataList = gpsRecord.getImgDataList();
+
             boolean ops_res = false;
-            boolean img_err = false;
+
+            int losted_size = gpsRecord.getLostedSize();
             GPSRecord record = null;
-            if (byteString.isEmpty()) {
+            if (imgDataList.isEmpty()) {
                 //没有图像数据不处理，直接向客户端方式数据出结果和图像数据状态
                 ops_res = true;
-                img_err = true;
             } else {
-                img_err = false;
-                byte[] imgs = byteString.toByteArray();
-                String sub_path = FileIOUtils.createRelativePath4Image(gpsRecord.getDataId());
-                String path = BASE_DIR + sub_path;
+                GPSTransferIniBean transferIniBean = ImageUpLoadProcssor.processGPSRecord(gpsRecord);
+                losted_size=transferIniBean.getTotal_losted_size();
                 try {
-                    //保存失败会抛出异常
-                    FileIOUtils.saveBinaryImg2Disk(path,imgs);
-                    //更新数据中的路径信息
-                    GPSTransferIniBean gpsTransferIniBean = new GPSTransferIniBean();
-                    gpsTransferIniBean.setDataid(gpsRecord.getDataId());
-                    gpsTransferIniBean.setOriginalUrl(sub_path);
-                    gpsTransferIniBean.setBaseDir(BASE_DIR);
-                    int res = gpsTransferService.updateGPSImgPath2DBRecord(Boot.UPSTREAM_DBNAME,gpsTransferIniBean);
+                    int res = gpsTransferService.updateGPSImgPath2DBRecord(Boot.UPSTREAM_DBNAME,transferIniBean);
                     ops_res = true;
                     //说明没有记录被更新(数据重复上传)
                     if(res==0){
-                        logger.warn("Warn：路径在"+path+"图像，名称为["+gpsRecord.getDataId()+".jgp]已经存在，进行去重操作...");
-                        FileIOUtils.deleteFile(path);
+                        logger.warn("Warn：路径在"+transferIniBean.getOriginalUrl()+"图像，名称为["+gpsRecord.getDataId()+".jgp]已经存在，进行去重操作...");
+                        ImageUpLoadProcssor.iterDelFiles(transferIniBean.getOriginalUrl());
                     }
                 }catch (Exception ex){
                     ex.printStackTrace();
                     //如果操作失败就删除文件夹中的图像
-                    FileIOUtils.deleteFile(path);
+                    ImageUpLoadProcssor.iterDelFiles(transferIniBean.getOriginalUrl());
                     ops_res = false;
                 }
             }
             record = GPSRecord.newBuilder().setClientRecordId(gpsRecord.getClientRecordId())
-                    .setServOpsRes(ops_res).setFileErr(img_err).build();
+                    .setServOpsRes(ops_res).setFileErr(losted_size>0?true:false).build();
             SyncDataResponse response = SyncDataResponse.newBuilder()
                     .setDataType(DataType.T_GPS)
                     .setGpsRecord(record)
@@ -130,6 +126,56 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
             responseObserver.onNext(response);
         }
     }
+//    private void doneClientRequest(SyncDataRequest syncDataRequest, StreamObserver<SyncDataResponse> responseObserver) {
+//        //GPS表
+//        if (syncDataRequest.getDataType() == DataType.T_GPS) {
+//            GPSRecord gpsRecord = syncDataRequest.getGpsRecord();
+//            //处理客户端图像
+//            String dataId = gpsRecord.getDataId();
+//            ByteString byteString = gpsRecord.getImgData();
+//            boolean ops_res = false;
+//            boolean img_err = false;
+//            GPSRecord record = null;
+//            if (byteString.isEmpty()) {
+//                //没有图像数据不处理，直接向客户端方式数据出结果和图像数据状态
+//                ops_res = true;
+//                img_err = true;
+//            } else {
+//                img_err = false;
+//                byte[] imgs = byteString.toByteArray();
+//                String sub_path = FileIOUtils.createRelativePath4Image(gpsRecord.getDataId());
+//                String path = BASE_DIR + sub_path;
+//                try {
+//                    //保存失败会抛出异常
+//                    FileIOUtils.saveBinaryImg2Disk(path,imgs);
+//                    //更新数据中的路径信息
+//                    GPSTransferIniBean gpsTransferIniBean = new GPSTransferIniBean();
+//                    gpsTransferIniBean.setDataid(gpsRecord.getDataId());
+//                    gpsTransferIniBean.setOriginalUrl(sub_path);
+//                    gpsTransferIniBean.setBaseDir(BASE_DIR);
+//                    int res = gpsTransferService.updateGPSImgPath2DBRecord(Boot.UPSTREAM_DBNAME,gpsTransferIniBean);
+//                    ops_res = true;
+//                    //说明没有记录被更新(数据重复上传)
+//                    if(res==0){
+//                        logger.warn("Warn：路径在"+path+"图像，名称为["+gpsRecord.getDataId()+".jgp]已经存在，进行去重操作...");
+//                        FileIOUtils.deleteFile(path);
+//                    }
+//                }catch (Exception ex){
+//                    ex.printStackTrace();
+//                    //如果操作失败就删除文件夹中的图像
+//                    FileIOUtils.deleteFile(path);
+//                    ops_res = false;
+//                }
+//            }
+//            record = GPSRecord.newBuilder().setClientRecordId(gpsRecord.getClientRecordId())
+//                    .setServOpsRes(ops_res).setFileErr(img_err).build();
+//            SyncDataResponse response = SyncDataResponse.newBuilder()
+//                    .setDataType(DataType.T_GPS)
+//                    .setGpsRecord(record)
+//                    .build();
+//            responseObserver.onNext(response);
+//        }
+//    }
 
     /**
      * 处理客户端请求任务

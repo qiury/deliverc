@@ -130,4 +130,8 @@ alter table gps add column basedir varchar(70) not null default '' comment '图�
 10. 在acc表的服务器端创建accid唯一索引，accid的值=客户端的(id_status_accid)
 alter table acc add unique index acc_4_distributed_system (accid)
 
+11. acc表添加自增主键
+alter table acc add id bigint not null primary key Auto_increment
 
+12. 在gps中添加total_losted_size字段，表示总计丢失文件的个数
+alter table gps add column total_losted_size tinyint not null default 0 comment '当前记录文件总计丢失个数'

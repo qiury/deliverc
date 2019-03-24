@@ -34,6 +34,7 @@ public class GPSTransferIniBean {
 
     private String clientRecordId;
     private String file_full_path;
+    private int total_losted_size = 0;
 
 
     public String getGpsid() {
@@ -194,6 +195,14 @@ public class GPSTransferIniBean {
 
     public void setFile_full_path(String file_full_path) {
         this.file_full_path = file_full_path;
+    }
+
+    public int getTotal_losted_size() {
+        return total_losted_size;
+    }
+
+    public void setTotal_losted_size(int total_losted_size) {
+        this.total_losted_size = total_losted_size;
     }
 
     @Override

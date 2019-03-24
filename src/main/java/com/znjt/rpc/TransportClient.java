@@ -34,12 +34,16 @@ public class TransportClient {
                 }
             });
             if(by_sync_single){
-                logger.debug("同步 {单条} 方式上传数据");
+                if(logger.isInfoEnabled()){
+                    logger.info("同步 {单条} 方式上传数据");
+                }
+
                 //通过同步单条的方式处理
                 transporterClientProxy.transferData2ServerBySync(gpsTransferIniBeans);
-
             }else {
-                logger.debug("同步 {批量} 方式上传数据");
+                if(logger.isDebugEnabled()) {
+                    logger.debug("同步 {批量} 方式上传数据");
+                }
                 //通过同步批处理方式发送数据
                 transporterClientProxy.transferData2ServerBySync4Batch(gpsTransferIniBeans);
             }

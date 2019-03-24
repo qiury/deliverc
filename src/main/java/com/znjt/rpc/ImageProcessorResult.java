@@ -2,6 +2,9 @@ package com.znjt.rpc;
 
 import com.znjt.proto.GPSRecord;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by qiuzx on 2019-03-20
  * Company BTT
@@ -10,21 +13,14 @@ import com.znjt.proto.GPSRecord;
  */
 public class ImageProcessorResult {
     private GPSRecord gpsRecord;
-    private boolean ops_res = false;
-    private boolean img_err = false;
-    private boolean persistent = false;
-    private String filePath = null;
-    private String absPath = null;
-    private String relPath = null;
-
+    private boolean ops_res;
+    private int losted_size = 0;
+    private String absPath = TransferProtoImpl4Server.BASE_DIR;
+    private List<SingleImgaeProcessResult> prs = new ArrayList<>();
 
     public ImageProcessorResult(){}
-    public ImageProcessorResult(GPSRecord gpsRecord, boolean ops_res, boolean img_err, boolean persistent,String filePath) {
+    public ImageProcessorResult(GPSRecord gpsRecord) {
         this.gpsRecord = gpsRecord;
-        this.ops_res = ops_res;
-        this.img_err = img_err;
-        this.persistent = persistent;
-        this.filePath = filePath;
     }
 
     public GPSRecord getGpsRecord() {
@@ -35,6 +31,14 @@ public class ImageProcessorResult {
         this.gpsRecord = gpsRecord;
     }
 
+    public int getLosted_size() {
+        return losted_size;
+    }
+
+    public void setLosted_size(int losted_size) {
+        this.losted_size = losted_size;
+    }
+
     public boolean isOps_res() {
         return ops_res;
     }
@@ -43,36 +47,16 @@ public class ImageProcessorResult {
         this.ops_res = ops_res;
     }
 
-    public boolean isImg_err() {
-        return img_err;
+    public List<SingleImgaeProcessResult> getPrs() {
+        return prs;
     }
 
-    public void setImg_err(boolean img_err) {
-        this.img_err = img_err;
+    public void setPrs(List<SingleImgaeProcessResult> prs) {
+        this.prs = prs;
     }
 
-    public boolean isPersistent() {
-        return persistent;
-    }
-
-    public void setPersistent(boolean persistent) {
-        this.persistent = persistent;
-    }
-
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
-    }
-
-    public String getRelPath() {
-        return relPath;
-    }
-
-    public void setRelPath(String relPath) {
-        this.relPath = relPath;
+    public void addProcessResult(SingleImgaeProcessResult pr){
+        this.prs.add(pr);
     }
 
     public String getAbsPath() {

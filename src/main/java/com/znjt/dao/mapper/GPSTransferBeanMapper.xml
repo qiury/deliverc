@@ -107,33 +107,33 @@
         <!--</foreach>-->
     <!--</update>-->
 
-    <!--批处理更新方式一，当记录大于10W时，可能会存在sql阻塞，小于10W时效率高-->
-    <update id="updateCurrentUploadedSuccessGPSImgRecords">
-        <foreach collection="list" item="item"  open="" close="" separator=";">
-            update gps set img_uploaded=${item.img_uploaded},img_err=${item.file_err} where gpsid = ${item.gpsid}
-        </foreach>
-    </update>
-
-    <!--批量更新方式二：在记录少于10W的时候效率低于第一种-->
-    <!--<update id="updateCurrentUploadedSuccessGPSImgRecords" databaseId="mysql">-->
-        <!--update gps-->
-        <!--<trim prefix="set" suffixOverrides=",">-->
-            <!--<trim prefix="img_uploaded = case" suffix="end,">-->
-                <!--<foreach collection="list" item="item" >-->
-                    <!--when gpsid=#{item.gpsid} then #{item.img_uploaded}-->
-                <!--</foreach>-->
-            <!--</trim>-->
-            <!--<trim prefix=" img_err = case" suffix="end,">-->
-                <!--<foreach collection="list" item="item" >-->
-                    <!--when gpsid=#{item.gpsid} then #{item.file_err}-->
-                <!--</foreach>-->
-            <!--</trim>-->
-        <!--</trim>-->
-        <!--where-->
-        <!--<foreach collection="list" item="item" separator="," open=" gpsid in (" close=")" >-->
-           <!--#{item.gpsid}-->
+    <!--批处理更新方式一，效率低-->
+    <!--<update id="updateCurrentUploadedSuccessGPSImgRecords">-->
+        <!--<foreach collection="list" item="item"  open="" close="" separator=";">-->
+            <!--update gps set img_uploaded=${item.img_uploaded},img_err=${item.file_err} where gpsid = ${item.gpsid}-->
         <!--</foreach>-->
     <!--</update>-->
+
+    <!--批量更新方式二：不会形成sql阻塞，效率高-->
+    <update id="updateCurrentUploadedSuccessGPSImgRecords" databaseId="mysql">
+        update gps
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="img_uploaded = case" suffix="end,">
+                <foreach collection="list" item="item" >
+                    when gpsid=#{item.gpsid} then #{item.img_uploaded}
+                </foreach>
+            </trim>
+            <trim prefix=" img_err = case" suffix="end,">
+                <foreach collection="list" item="item" >
+                    when gpsid=#{item.gpsid} then #{item.file_err}
+                </foreach>
+            </trim>
+        </trim>
+        where
+        <foreach collection="list" item="item" separator="," open=" gpsid in (" close=")" >
+           #{item.gpsid}
+        </foreach>
+    </update>
 
 
     <!--客户端 end-->
@@ -149,32 +149,37 @@
     </update>
 
     <!--批量更新图像地址信息，-->
-    <update id="updateBatchGPSImgPath2DBRecord" databaseId="mysql">
-        <foreach collection="list" item="item"  separator=";">
-            update gps set basedir=#{item.baseDir},ORIGINAL_URL=#{item.originalUrl}  where dataid=#{item.dataid} and ORIGINAL_URL is null
-        </foreach>
-    </update>
-
-    <!--批量更新图像地址信息,记录少于10W的时候效率低于第一种-->
-    <!--<update id="updateBatchGPSImgPath2DBRecord_bak" databaseId="mysql">-->
-        <!--update gps-->
-        <!--<trim prefix="set" suffixOverrides=",">-->
-            <!--<trim prefix="basedir = case" suffix="end,">-->
-                <!--<foreach collection="list" item="item" >-->
-                    <!--when dataid=#{item.dataid} and ORIGINAL_URL is null then #{item.baseDir}-->
-                <!--</foreach>-->
-            <!--</trim>-->
-            <!--<trim prefix=" ORIGINAL_URL = case" suffix="end,">-->
-                <!--<foreach collection="list" item="item" >-->
-                    <!--when dataid=#{item.dataid} and ORIGINAL_URL is null then #{item.originalUrl}-->
-                <!--</foreach>-->
-            <!--</trim>-->
-        <!--</trim>-->
-        <!--where-->
-        <!--<foreach collection="list" item="item" separator="," open=" dataId in (" close=")" >-->
-            <!--#{item.dataid}-->
+    <!--<update id="updateBatchGPSImgPath2DBRecord" databaseId="mysql">-->
+        <!--<foreach collection="list" item="item"  separator=";">-->
+            <!--update gps set basedir=#{item.baseDir},ORIGINAL_URL=#{item.originalUrl}  where dataid=#{item.dataid} and ORIGINAL_URL is null-->
         <!--</foreach>-->
     <!--</update>-->
+
+    <!--批量更新图像地址信息,记录少于10W的时候效率低于第一种-->
+    <update id="updateBatchGPSImgPath2DBRecord" databaseId="mysql">
+        update gps
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="basedir = case" suffix="end,">
+                <foreach collection="list" item="item" >
+                    when dataid=#{item.dataid} and ORIGINAL_URL is null then #{item.baseDir}
+                </foreach>
+            </trim>
+            <trim prefix=" ORIGINAL_URL = case" suffix="end,">
+                <foreach collection="list" item="item" >
+                    when dataid=#{item.dataid} and ORIGINAL_URL is null then #{item.originalUrl}
+                </foreach>
+            </trim>
+            <trim prefix=" total_losted_size = case" suffix="end,">
+                <foreach collection="list" item="item" >
+                    when dataid=#{item.dataid} and ORIGINAL_URL is null then #{item.total_losted_size}
+                </foreach>
+            </trim>
+        </trim>
+        where
+        <foreach collection="list" item="item" separator="," open=" dataId in (" close=")" >
+            #{item.dataid}
+        </foreach>
+    </update>
 
     <insert databaseId="mysql" id="upLoadGPSRecordDatas2UpStream" keyProperty="id" >
        insert into gps (GPSID,COLLECT_TIME,STATUS,LATITUDE,LONGITUDE,SPEED,AZIMUTH,DECLINATION,CREATE_TIME,UPLOAD_TIME,RESULT,AREA,dataid,UPLOADSTATUS)

@@ -70,19 +70,19 @@ public final class TransferProto {
       "d\030\003 \001(\0132\031.com.znjt.proto.GPSRecordH\000B\010\n\006" +
       "record\"K\n\tINIRecord\022\030\n\020client_record_id\030" +
       "\001 \001(\t\022\016\n\006dataId\030\002 \001(\t\022\024\n\014serv_ops_res\030\003 " +
-      "\001(\010\"o\n\tGPSRecord\022\030\n\020client_record_id\030\001 \001" +
-      "(\t\022\016\n\006dataId\030\002 \001(\t\022\024\n\014serv_ops_res\030\003 \001(\010" +
-      "\022\020\n\010img_data\030\004 \001(\014\022\020\n\010file_err\030\005 \001(\010* \n\010" +
-      "DataType\022\t\n\005T_INI\020\000\022\t\n\005T_GPS\020\0012\254\002\n\017Trans" +
-      "ferService\022^\n\023transporterByStream\022\037.com." +
-      "znjt.proto.SyncDataRequest\032 .com.znjt.pr" +
-      "oto.SyncDataResponse\"\000(\0010\001\022X\n\021transporte" +
-      "rBySync\022\037.com.znjt.proto.SyncDataRequest" +
-      "\032 .com.znjt.proto.SyncDataResponse\"\000\022_\n\024" +
-      "transporterMulBySync\022!.com.znjt.proto.Sy" +
-      "ncMulImgRequest\032\".com.znjt.proto.SyncMul" +
-      "ImgResponse\"\000B!\n\016com.znjt.protoB\rTransfe" +
-      "rProtoP\001b\006proto3"
+      "\001(\010\"\204\001\n\tGPSRecord\022\030\n\020client_record_id\030\001 " +
+      "\001(\t\022\016\n\006dataId\030\002 \001(\t\022\024\n\014serv_ops_res\030\003 \001(" +
+      "\010\022\020\n\010img_data\030\004 \003(\014\022\020\n\010file_err\030\005 \001(\010\022\023\n" +
+      "\013losted_size\030\006 \001(\005* \n\010DataType\022\t\n\005T_INI\020" +
+      "\000\022\t\n\005T_GPS\020\0012\254\002\n\017TransferService\022^\n\023tran" +
+      "sporterByStream\022\037.com.znjt.proto.SyncDat" +
+      "aRequest\032 .com.znjt.proto.SyncDataRespon" +
+      "se\"\000(\0010\001\022X\n\021transporterBySync\022\037.com.znjt" +
+      ".proto.SyncDataRequest\032 .com.znjt.proto." +
+      "SyncDataResponse\"\000\022_\n\024transporterMulBySy" +
+      "nc\022!.com.znjt.proto.SyncMulImgRequest\032\"." +
+      "com.znjt.proto.SyncMulImgResponse\"\000B!\n\016c" +
+      "om.znjt.protoB\rTransferProtoP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -131,7 +131,7 @@ public final class TransferProto {
     internal_static_com_znjt_proto_GPSRecord_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_znjt_proto_GPSRecord_descriptor,
-        new java.lang.String[] { "ClientRecordId", "DataId", "ServOpsRes", "ImgData", "FileErr", });
+        new java.lang.String[] { "ClientRecordId", "DataId", "ServOpsRes", "ImgData", "FileErr", "LostedSize", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

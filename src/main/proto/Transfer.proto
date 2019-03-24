@@ -61,6 +61,7 @@ message GPSRecord{
     string client_record_id = 1;
     string dataId = 2;
     bool serv_ops_res = 3;
-    bytes img_data = 4;
+    repeated bytes img_data = 4;
     bool file_err = 5;
+    int32 losted_size = 6;
 }

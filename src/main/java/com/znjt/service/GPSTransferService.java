@@ -2,7 +2,12 @@ package com.znjt.service;
 
 import com.znjt.dao.beans.GPSTransferIniBean;
 import com.znjt.dao.impl.GPSTransferDao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import sun.rmi.runtime.Log;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -14,6 +19,7 @@ import java.util.Optional;
  * @author qiuzx
  */
 public class GPSTransferService {
+    private Logger logger = LoggerFactory.getLogger(GPSTransferService.class);
     private GPSTransferDao dao = new GPSTransferDao();
     /**
      * 获取没有上传的数据记录
@@ -49,7 +55,11 @@ public class GPSTransferService {
      * @param gpsTransferIniBeans
      */
     public void updateCurrentUploadedSuccessGPSImgRecords(String dbname,List<GPSTransferIniBean> gpsTransferIniBeans){
+        Instant begin = Instant.now();
         dao.updateCurrentUploadedSuccessGPSImgRecords(dbname,gpsTransferIniBeans);
+        if(logger.isDebugEnabled()){
+            logger.debug("Client 批量更新 ["+gpsTransferIniBeans.size()+"]条图像上传标记到数据耗时：" + Duration.between(begin,Instant.now()).toMillis() + " ms");
+        }
     }
 
     /**
@@ -74,8 +84,10 @@ public class GPSTransferService {
     }
 
     public void updateBatchGPSImgPath2DBRecord(String dbName,List<GPSTransferIniBean> gpsTransferIniBeans){
+        Instant begin = Instant.now();
         dao.updateBatchGPSImgPath2DBRecord(dbName,gpsTransferIniBeans);
+        if(logger.isDebugEnabled()){
+            logger.debug("Server 批量更新 ["+gpsTransferIniBeans.size()+"]条图像上传路径记录到数据耗时：" + Duration.between(begin,Instant.now()).toMillis() + " ms");
+        }
     }
-
-
 }

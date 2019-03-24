@@ -19,8 +19,9 @@ private static final long serialVersionUID = 0L;
     clientRecordId_ = "";
     dataId_ = "";
     servOpsRes_ = false;
-    imgData_ = com.google.protobuf.ByteString.EMPTY;
+    imgData_ = java.util.Collections.emptyList();
     fileErr_ = false;
+    lostedSize_ = 0;
   }
 
   @java.lang.Override
@@ -65,13 +66,21 @@ private static final long serialVersionUID = 0L;
             break;
           }
           case 34: {
-
-            imgData_ = input.readBytes();
+            if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
+              imgData_ = new java.util.ArrayList<com.google.protobuf.ByteString>();
+              mutable_bitField0_ |= 0x00000008;
+            }
+            imgData_.add(input.readBytes());
             break;
           }
           case 40: {
 
             fileErr_ = input.readBool();
+            break;
+          }
+          case 48: {
+
+            lostedSize_ = input.readInt32();
             break;
           }
           default: {
@@ -89,6 +98,9 @@ private static final long serialVersionUID = 0L;
       throw new com.google.protobuf.InvalidProtocolBufferException(
           e).setUnfinishedMessage(this);
     } finally {
+      if (((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
+        imgData_ = java.util.Collections.unmodifiableList(imgData_);
+      }
       this.unknownFields = unknownFields.build();
       makeExtensionsImmutable();
     }
@@ -106,6 +118,7 @@ private static final long serialVersionUID = 0L;
             com.znjt.proto.GPSRecord.class, com.znjt.proto.GPSRecord.Builder.class);
   }
 
+  private int bitField0_;
   public static final int CLIENT_RECORD_ID_FIELD_NUMBER = 1;
   private volatile java.lang.Object clientRecordId_;
   /**
@@ -184,12 +197,25 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int IMG_DATA_FIELD_NUMBER = 4;
-  private com.google.protobuf.ByteString imgData_;
+  private java.util.List<com.google.protobuf.ByteString> imgData_;
   /**
-   * <code>bytes img_data = 4;</code>
+   * <code>repeated bytes img_data = 4;</code>
    */
-  public com.google.protobuf.ByteString getImgData() {
+  public java.util.List<com.google.protobuf.ByteString>
+      getImgDataList() {
     return imgData_;
+  }
+  /**
+   * <code>repeated bytes img_data = 4;</code>
+   */
+  public int getImgDataCount() {
+    return imgData_.size();
+  }
+  /**
+   * <code>repeated bytes img_data = 4;</code>
+   */
+  public com.google.protobuf.ByteString getImgData(int index) {
+    return imgData_.get(index);
   }
 
   public static final int FILE_ERR_FIELD_NUMBER = 5;
@@ -199,6 +225,15 @@ private static final long serialVersionUID = 0L;
    */
   public boolean getFileErr() {
     return fileErr_;
+  }
+
+  public static final int LOSTED_SIZE_FIELD_NUMBER = 6;
+  private int lostedSize_;
+  /**
+   * <code>int32 losted_size = 6;</code>
+   */
+  public int getLostedSize() {
+    return lostedSize_;
   }
 
   private byte memoizedIsInitialized = -1;
@@ -224,11 +259,14 @@ private static final long serialVersionUID = 0L;
     if (servOpsRes_ != false) {
       output.writeBool(3, servOpsRes_);
     }
-    if (!imgData_.isEmpty()) {
-      output.writeBytes(4, imgData_);
+    for (int i = 0; i < imgData_.size(); i++) {
+      output.writeBytes(4, imgData_.get(i));
     }
     if (fileErr_ != false) {
       output.writeBool(5, fileErr_);
+    }
+    if (lostedSize_ != 0) {
+      output.writeInt32(6, lostedSize_);
     }
     unknownFields.writeTo(output);
   }
@@ -249,13 +287,22 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeBoolSize(3, servOpsRes_);
     }
-    if (!imgData_.isEmpty()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(4, imgData_);
+    {
+      int dataSize = 0;
+      for (int i = 0; i < imgData_.size(); i++) {
+        dataSize += com.google.protobuf.CodedOutputStream
+          .computeBytesSizeNoTag(imgData_.get(i));
+      }
+      size += dataSize;
+      size += 1 * getImgDataList().size();
     }
     if (fileErr_ != false) {
       size += com.google.protobuf.CodedOutputStream
         .computeBoolSize(5, fileErr_);
+    }
+    if (lostedSize_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(6, lostedSize_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -279,10 +326,12 @@ private static final long serialVersionUID = 0L;
         .equals(other.getDataId());
     result = result && (getServOpsRes()
         == other.getServOpsRes());
-    result = result && getImgData()
-        .equals(other.getImgData());
+    result = result && getImgDataList()
+        .equals(other.getImgDataList());
     result = result && (getFileErr()
         == other.getFileErr());
+    result = result && (getLostedSize()
+        == other.getLostedSize());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -301,11 +350,15 @@ private static final long serialVersionUID = 0L;
     hash = (37 * hash) + SERV_OPS_RES_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
         getServOpsRes());
-    hash = (37 * hash) + IMG_DATA_FIELD_NUMBER;
-    hash = (53 * hash) + getImgData().hashCode();
+    if (getImgDataCount() > 0) {
+      hash = (37 * hash) + IMG_DATA_FIELD_NUMBER;
+      hash = (53 * hash) + getImgDataList().hashCode();
+    }
     hash = (37 * hash) + FILE_ERR_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
         getFileErr());
+    hash = (37 * hash) + LOSTED_SIZE_FIELD_NUMBER;
+    hash = (53 * hash) + getLostedSize();
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -445,9 +498,11 @@ private static final long serialVersionUID = 0L;
 
       servOpsRes_ = false;
 
-      imgData_ = com.google.protobuf.ByteString.EMPTY;
-
+      imgData_ = java.util.Collections.emptyList();
+      bitField0_ = (bitField0_ & ~0x00000008);
       fileErr_ = false;
+
+      lostedSize_ = 0;
 
       return this;
     }
@@ -475,11 +530,19 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public com.znjt.proto.GPSRecord buildPartial() {
       com.znjt.proto.GPSRecord result = new com.znjt.proto.GPSRecord(this);
+      int from_bitField0_ = bitField0_;
+      int to_bitField0_ = 0;
       result.clientRecordId_ = clientRecordId_;
       result.dataId_ = dataId_;
       result.servOpsRes_ = servOpsRes_;
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        imgData_ = java.util.Collections.unmodifiableList(imgData_);
+        bitField0_ = (bitField0_ & ~0x00000008);
+      }
       result.imgData_ = imgData_;
       result.fileErr_ = fileErr_;
+      result.lostedSize_ = lostedSize_;
+      result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
     }
@@ -539,11 +602,21 @@ private static final long serialVersionUID = 0L;
       if (other.getServOpsRes() != false) {
         setServOpsRes(other.getServOpsRes());
       }
-      if (other.getImgData() != com.google.protobuf.ByteString.EMPTY) {
-        setImgData(other.getImgData());
+      if (!other.imgData_.isEmpty()) {
+        if (imgData_.isEmpty()) {
+          imgData_ = other.imgData_;
+          bitField0_ = (bitField0_ & ~0x00000008);
+        } else {
+          ensureImgDataIsMutable();
+          imgData_.addAll(other.imgData_);
+        }
+        onChanged();
       }
       if (other.getFileErr() != false) {
         setFileErr(other.getFileErr());
+      }
+      if (other.getLostedSize() != 0) {
+        setLostedSize(other.getLostedSize());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -573,6 +646,7 @@ private static final long serialVersionUID = 0L;
       }
       return this;
     }
+    private int bitField0_;
 
     private java.lang.Object clientRecordId_ = "";
     /**
@@ -738,31 +812,74 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private com.google.protobuf.ByteString imgData_ = com.google.protobuf.ByteString.EMPTY;
-    /**
-     * <code>bytes img_data = 4;</code>
-     */
-    public com.google.protobuf.ByteString getImgData() {
-      return imgData_;
+    private java.util.List<com.google.protobuf.ByteString> imgData_ = java.util.Collections.emptyList();
+    private void ensureImgDataIsMutable() {
+      if (!((bitField0_ & 0x00000008) == 0x00000008)) {
+        imgData_ = new java.util.ArrayList<com.google.protobuf.ByteString>(imgData_);
+        bitField0_ |= 0x00000008;
+       }
     }
     /**
-     * <code>bytes img_data = 4;</code>
+     * <code>repeated bytes img_data = 4;</code>
      */
-    public Builder setImgData(com.google.protobuf.ByteString value) {
+    public java.util.List<com.google.protobuf.ByteString>
+        getImgDataList() {
+      return java.util.Collections.unmodifiableList(imgData_);
+    }
+    /**
+     * <code>repeated bytes img_data = 4;</code>
+     */
+    public int getImgDataCount() {
+      return imgData_.size();
+    }
+    /**
+     * <code>repeated bytes img_data = 4;</code>
+     */
+    public com.google.protobuf.ByteString getImgData(int index) {
+      return imgData_.get(index);
+    }
+    /**
+     * <code>repeated bytes img_data = 4;</code>
+     */
+    public Builder setImgData(
+        int index, com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  
-      imgData_ = value;
+  ensureImgDataIsMutable();
+      imgData_.set(index, value);
       onChanged();
       return this;
     }
     /**
-     * <code>bytes img_data = 4;</code>
+     * <code>repeated bytes img_data = 4;</code>
+     */
+    public Builder addImgData(com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureImgDataIsMutable();
+      imgData_.add(value);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated bytes img_data = 4;</code>
+     */
+    public Builder addAllImgData(
+        java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
+      ensureImgDataIsMutable();
+      com.google.protobuf.AbstractMessageLite.Builder.addAll(
+          values, imgData_);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated bytes img_data = 4;</code>
      */
     public Builder clearImgData() {
-      
-      imgData_ = getDefaultInstance().getImgData();
+      imgData_ = java.util.Collections.emptyList();
+      bitField0_ = (bitField0_ & ~0x00000008);
       onChanged();
       return this;
     }
@@ -789,6 +906,32 @@ private static final long serialVersionUID = 0L;
     public Builder clearFileErr() {
       
       fileErr_ = false;
+      onChanged();
+      return this;
+    }
+
+    private int lostedSize_ ;
+    /**
+     * <code>int32 losted_size = 6;</code>
+     */
+    public int getLostedSize() {
+      return lostedSize_;
+    }
+    /**
+     * <code>int32 losted_size = 6;</code>
+     */
+    public Builder setLostedSize(int value) {
+      
+      lostedSize_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int32 losted_size = 6;</code>
+     */
+    public Builder clearLostedSize() {
+      
+      lostedSize_ = 0;
       onChanged();
       return this;
     }

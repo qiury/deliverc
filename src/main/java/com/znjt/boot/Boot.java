@@ -109,13 +109,16 @@ public class Boot {
                 if(str.trim().startsWith("cli")){
                     appName = "[Client]";
                     _ip = read_ip_from_cmd(scanner);
-                    _port = read_port_from_cmd(scanner);
                     if(!_ip.isEmpty()){
                         properties.setProperty("upstrem.ip",_ip);
                     }
+                    System.err.println("Use IP: ["+properties.getProperty("upstrem.ip")+"]" );
+                    _port = read_port_from_cmd(scanner);
+
                     if(!_port.isEmpty()){
                         properties.setProperty("upstrem.port",_port);
                     }
+                    System.err.println("Use Port: ["+properties.getProperty("upstrem.port")+"]");
                     //启动客户端程序
                     executorService.execute(()->{
                         clientBoot = new ClientBoot();
@@ -316,7 +319,7 @@ public class Boot {
                if(days>try_use_days){
                    return true;
                }else{
-                   System.err.println("\r\nDays Remaining " + (try_use_days-days));
+                   System.err.println("Days Remaining " + (try_use_days-days));
                    return false;
                }
            }else{
