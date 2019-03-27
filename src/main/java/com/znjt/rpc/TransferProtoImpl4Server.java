@@ -12,6 +12,8 @@ import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 
@@ -38,8 +40,15 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
     @Override
     public void transporterMulBySync(SyncMulImgRequest request, StreamObserver<SyncMulImgResponse> responseObserver) {
         if(request.getDataType()==DataType.T_GPS){
+            if(logger.isWarnEnabled()) {
+                logger.warn("开始执行同步批处理客户端上传图像的请求操作");
+            }
+            Instant instant = Instant.now();
             List<GPSRecord> records = ImageUpLoadProcssor.processGPSRecord(request.getGpsRecordList(),gpsTransferService);
             SyncMulImgResponse syncMulImgResponse = SyncMulImgResponse.newBuilder().setDataType(DataType.T_GPS).addAllGpsRecord(records).build();
+            if(logger.isWarnEnabled()) {
+                logger.warn("同步批处理客户端上传图像的请求操作结束，批出处理[" + records.size() + "]条记录，耗时[" + Duration.between(instant, Instant.now()).toMillis() + "] ms");
+            }
             responseObserver.onNext(syncMulImgResponse);
         }
         responseObserver.onCompleted();
@@ -56,12 +65,40 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
         responseObserver.onCompleted();
     }
 
+    /**
+     * 同步处理请求，数据中每一个图像单独封装一个record对象，需要将这些对象进行合并。
+     * @param
+     * @return
+     */
+
+    @Override
+    public void transporterMulSingleBySync(SyncMulSingleImgRequest request, StreamObserver<SyncMulSingleImgResponse> responseObserver){
+        if(request.getDataType()==DataType.T_GPS_SINGLE) {
+            Instant instant = Instant.now();
+            if(logger.isWarnEnabled()) {
+                logger.warn("开始执行{SyncMulSingle}同步批处理客户端上传图像的请求操作");
+            }
+            List<GPSSingleRecord> records = ImageUpLoadProcssor.processMultiSingleGPSRecord(request.getGpsSingleRecordList(), gpsTransferService);
+            SyncMulSingleImgResponse syncMulSingleImgResponse = SyncMulSingleImgResponse.newBuilder().setDataType(DataType.T_GPS_SINGLE).addAllGpsSingleRecord(records).build();
+            if(logger.isWarnEnabled()) {
+                logger.warn("同步{SyncMulSingle}批处理客户端上传图像的请求操作结束，批出处理[" + records.size() + "]条记录，耗时[" + Duration.between(instant, Instant.now()).toMillis() + "] ms");
+            }
+            responseObserver.onNext(syncMulSingleImgResponse);
+        }
+        responseObserver.onCompleted();
+    }
+
+
+
+
     @Override
     public StreamObserver<SyncDataRequest> transporterByStream(StreamObserver<SyncDataResponse> responseObserver) {
         StreamObserver<SyncDataRequest> streamObserver = new StreamObserver<SyncDataRequest>() {
             @Override
             public void onNext(SyncDataRequest syncDataRequest) {
-                logger.debug("server say:  receive img upload request from client ......");
+                if(logger.isDebugEnabled()) {
+                    logger.debug("server say:  receive img upload request from client ......");
+                }
                 doneClientRequest(syncDataRequest,responseObserver);
                // executorService.execute(new Task(syncDataRequest, responseObserver));
             }
@@ -101,7 +138,7 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
                 ops_res = true;
             } else {
                 GPSTransferIniBean transferIniBean = ImageUpLoadProcssor.processGPSRecord(gpsRecord);
-                losted_size=transferIniBean.getTotal_losted_size();
+                losted_size=transferIniBean.getTotalLostedSize();
                 try {
                     int res = gpsTransferService.updateGPSImgPath2DBRecord(Boot.UPSTREAM_DBNAME,transferIniBean);
                     ops_res = true;

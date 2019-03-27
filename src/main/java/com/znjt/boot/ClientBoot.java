@@ -7,6 +7,8 @@ import com.znjt.net.NetStatusUtils;
 import com.znjt.rpc.TransportClient;
 import com.znjt.service.ACCTransferService;
 import com.znjt.service.GPSTransferService;
+import com.znjt.utils.LoggerUtils;
+import io.grpc.netty.shaded.io.netty.util.concurrent.DefaultThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -177,11 +179,11 @@ public class ClientBoot {
      * 检查gps未上传的记录
      */
     private void start_monitor_gps_records() {
-        logger.info("检查是否存在要上传的gps记录数据...");
+        LoggerUtils.info(logger,"检查是否存在要上传的gps记录数据...");
         List<GPSTransferIniBean> recordDatas = gpsTransferService.findUnUpLoadGPSRecordDatas(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
         while (recordDatas != null && recordDatas.size() > 0) {
             limiting();
-            logger.info("开始批量上传GPS记录[" + recordDatas.size() + "]条");
+            LoggerUtils.info(logger,"开始批量上传GPS记录[" + recordDatas.size() + "]条");
             gpsTransferService.upLoadGPSRecordDatas2UpStream(Boot.UPSTREAM_DBNAME, recordDatas);
             gpsTransferService.updateCurrentUpLoadedSuccessGPSRescords(Boot.DOWNSTREAM_DBNAME, recordDatas);
             recordDatas = gpsTransferService.findUnUpLoadGPSRecordDatas(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
@@ -189,18 +191,18 @@ public class ClientBoot {
                 break;
             }
         }
-        logger.info("没有gps记录数据需要上传...");
+        LoggerUtils.info(logger,"没有gps记录数据需要上传...");
     }
 
     /**
      * 检查未上传的acc记录
      */
     private void start_monitor_acc() {
-        logger.info("检查是否存在要上传的ACC记录数据...");
+        LoggerUtils.info(logger,"检查是否存在要上传的ACC记录数据...");
         List<ACCTransferIniBean> recordDatas = accTransferService.findUnUpLoadACCRecordDatas(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
         while (recordDatas != null && recordDatas.size() > 0) {
             limiting();
-            logger.info("开始批量上传ACC记录[" + recordDatas.size() + "]条");
+            LoggerUtils.info(logger,"开始批量上传ACC记录[" + recordDatas.size() + "]条");
             accTransferService.upLoadACCRecordDatas2UpStream(Boot.UPSTREAM_DBNAME, recordDatas);
             accTransferService.updateCurrentUpLoadedSuccessACCRescords(Boot.DOWNSTREAM_DBNAME, recordDatas);
             recordDatas = accTransferService.findUnUpLoadACCRecordDatas(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
@@ -209,11 +211,14 @@ public class ClientBoot {
                 break;
             }
         }
-        logger.info("没有ACC记录数据需要上传...");
+        LoggerUtils.info(logger,"没有ACC记录数据需要上传...");
     }
 
     private void limiting(){
         if(RATE_LIMITING){
+            if(logger.isWarnEnabled()){
+                logger.warn("限速中.....");
+            }
             try {
                 Thread.sleep(ThreadLocalRandom.current().nextInt(5000,10000));
             } catch (InterruptedException e) {

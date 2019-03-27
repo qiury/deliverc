@@ -5,6 +5,8 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.*;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by qiuzx on 2019-03-15
@@ -12,6 +14,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * Depart Tech
  */
 public class FileIOUtils {
+    private static final AtomicInteger LOOPER = new AtomicInteger();
 
     private FileIOUtils(){
 
@@ -66,8 +69,20 @@ public class FileIOUtils {
         sb.append(getRandomFlag());
         sb.append("/");
         sb.append(getRandomFlag());
-        sb.append("/").append(imageName).append(".jpg");
+        sb.append("/").append(imageName).append(getLoopNumFlag()).append(".jpg");
         return sb.toString();
+    }
+
+    /**
+     * 获取一个2位循环数字
+     * @return
+     */
+    private static String getLoopNumFlag(){
+        int res = LOOPER.incrementAndGet();
+        if(res==99){
+            LOOPER.set(1);
+        }
+        return String.format("%02x",res);
     }
 
     /**

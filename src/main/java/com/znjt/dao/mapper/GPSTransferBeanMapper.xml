@@ -85,7 +85,7 @@
     表示范围是语句范围，语句执行结束就情况缓存（类似select标签中的flushCache=true），这样即可以起到禁用一级缓存。
     -->
     <select id="findUnUpLoadGPSImgDatas" resultType="GPSTransferIniBean" useCache="false" flushCache="false">
-         select GPSID,STATUS,dataid, original_Url as originalUrl from gps where UPLOADSTATUS = 1 and img_uploaded = false and trim(ORIGINAL_URL)!='no image' limit 0,#{pageSize}
+         select GPSID,STATUS,dataid, original_Url as originalUrl from gps where trim(ORIGINAL_URL)!='no image' and ORIGINAL_URL is not null and  UPLOADSTATUS = 1 and img_uploaded = false   limit 0,#{pageSize}
     </select>
 
     <!--
@@ -145,7 +145,7 @@
        更新服务端img记录,ORIGINAL_URL 为null说明没有更新过图像，放置重复上传图像
     -->
     <update id="updateGPSImgPath2DBRecord">
-        update gps set basedir=#{baseDir}, ORIGINAL_URL=#{originalUrl} where dataId=#{dataid} and ORIGINAL_URL is null
+        update gps set basedir=#{baseDir}, ORIGINAL_URL=#{originalUrl},total_losted_size=#{totalLostedSize} where dataId=#{dataid} and ORIGINAL_URL is null
     </update>
 
     <!--批量更新图像地址信息，-->
@@ -164,16 +164,17 @@
                     when dataid=#{item.dataid} and ORIGINAL_URL is null then #{item.baseDir}
                 </foreach>
             </trim>
+            <trim prefix=" total_losted_size = case" suffix="end,">
+                <foreach collection="list" item="item" >
+                    when dataid=#{item.dataid} and ORIGINAL_URL is null then #{item.totalLostedSize}
+                </foreach>
+            </trim>
             <trim prefix=" ORIGINAL_URL = case" suffix="end,">
                 <foreach collection="list" item="item" >
                     when dataid=#{item.dataid} and ORIGINAL_URL is null then #{item.originalUrl}
                 </foreach>
             </trim>
-            <trim prefix=" total_losted_size = case" suffix="end,">
-                <foreach collection="list" item="item" >
-                    when dataid=#{item.dataid} and ORIGINAL_URL is null then #{item.total_losted_size}
-                </foreach>
-            </trim>
+
         </trim>
         where
         <foreach collection="list" item="item" separator="," open=" dataId in (" close=")" >

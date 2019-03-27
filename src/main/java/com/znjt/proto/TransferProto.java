@@ -25,6 +25,16 @@ public final class TransferProto {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_com_znjt_proto_SyncMulImgRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_com_znjt_proto_SyncMulSingleImgResponse_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_com_znjt_proto_SyncMulSingleImgResponse_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_com_znjt_proto_SyncMulSingleImgRequest_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_com_znjt_proto_SyncMulSingleImgRequest_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_com_znjt_proto_SyncDataRequest_descriptor;
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -44,6 +54,11 @@ public final class TransferProto {
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_com_znjt_proto_GPSRecord_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_com_znjt_proto_GPSSingleRecord_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_com_znjt_proto_GPSSingleRecord_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -59,30 +74,43 @@ public final class TransferProto {
       "\031.com.znjt.proto.GPSRecord\"o\n\021SyncMulImg" +
       "Request\022+\n\tdata_type\030\001 \001(\0162\030.com.znjt.pr" +
       "oto.DataType\022-\n\ngps_record\030\003 \003(\0132\031.com.z" +
-      "njt.proto.GPSRecord\"\252\001\n\017SyncDataRequest\022" +
-      "+\n\tdata_type\030\001 \001(\0162\030.com.znjt.proto.Data" +
-      "Type\022/\n\nini_record\030\002 \001(\0132\031.com.znjt.prot" +
-      "o.INIRecordH\000\022/\n\ngps_record\030\003 \001(\0132\031.com." +
-      "znjt.proto.GPSRecordH\000B\010\n\006record\"\253\001\n\020Syn" +
-      "cDataResponse\022+\n\tdata_type\030\001 \001(\0162\030.com.z" +
-      "njt.proto.DataType\022/\n\nini_record\030\002 \001(\0132\031" +
-      ".com.znjt.proto.INIRecordH\000\022/\n\ngps_recor" +
-      "d\030\003 \001(\0132\031.com.znjt.proto.GPSRecordH\000B\010\n\006" +
-      "record\"K\n\tINIRecord\022\030\n\020client_record_id\030" +
-      "\001 \001(\t\022\016\n\006dataId\030\002 \001(\t\022\024\n\014serv_ops_res\030\003 " +
-      "\001(\010\"\204\001\n\tGPSRecord\022\030\n\020client_record_id\030\001 " +
-      "\001(\t\022\016\n\006dataId\030\002 \001(\t\022\024\n\014serv_ops_res\030\003 \001(" +
-      "\010\022\020\n\010img_data\030\004 \003(\014\022\020\n\010file_err\030\005 \001(\010\022\023\n" +
-      "\013losted_size\030\006 \001(\005* \n\010DataType\022\t\n\005T_INI\020" +
-      "\000\022\t\n\005T_GPS\020\0012\254\002\n\017TransferService\022^\n\023tran" +
-      "sporterByStream\022\037.com.znjt.proto.SyncDat" +
-      "aRequest\032 .com.znjt.proto.SyncDataRespon" +
-      "se\"\000(\0010\001\022X\n\021transporterBySync\022\037.com.znjt" +
-      ".proto.SyncDataRequest\032 .com.znjt.proto." +
-      "SyncDataResponse\"\000\022_\n\024transporterMulBySy" +
-      "nc\022!.com.znjt.proto.SyncMulImgRequest\032\"." +
-      "com.znjt.proto.SyncMulImgResponse\"\000B!\n\016c" +
-      "om.znjt.protoB\rTransferProtoP\001b\006proto3"
+      "njt.proto.GPSRecord\"\203\001\n\030SyncMulSingleImg" +
+      "Response\022+\n\tdata_type\030\001 \001(\0162\030.com.znjt.p" +
+      "roto.DataType\022:\n\021gps_single_record\030\002 \003(\013" +
+      "2\037.com.znjt.proto.GPSSingleRecord\"\202\001\n\027Sy" +
+      "ncMulSingleImgRequest\022+\n\tdata_type\030\001 \001(\016" +
+      "2\030.com.znjt.proto.DataType\022:\n\021gps_single" +
+      "_record\030\002 \003(\0132\037.com.znjt.proto.GPSSingle" +
+      "Record\"\252\001\n\017SyncDataRequest\022+\n\tdata_type\030" +
+      "\001 \001(\0162\030.com.znjt.proto.DataType\022/\n\nini_r" +
+      "ecord\030\002 \001(\0132\031.com.znjt.proto.INIRecordH\000" +
+      "\022/\n\ngps_record\030\003 \001(\0132\031.com.znjt.proto.GP" +
+      "SRecordH\000B\010\n\006record\"\253\001\n\020SyncDataResponse" +
+      "\022+\n\tdata_type\030\001 \001(\0162\030.com.znjt.proto.Dat" +
+      "aType\022/\n\nini_record\030\002 \001(\0132\031.com.znjt.pro" +
+      "to.INIRecordH\000\022/\n\ngps_record\030\003 \001(\0132\031.com" +
+      ".znjt.proto.GPSRecordH\000B\010\n\006record\"K\n\tINI" +
+      "Record\022\030\n\020client_record_id\030\001 \001(\t\022\016\n\006data" +
+      "Id\030\002 \001(\t\022\024\n\014serv_ops_res\030\003 \001(\010\"\204\001\n\tGPSRe" +
+      "cord\022\030\n\020client_record_id\030\001 \001(\t\022\016\n\006dataId" +
+      "\030\002 \001(\t\022\024\n\014serv_ops_res\030\003 \001(\010\022\020\n\010img_data" +
+      "\030\004 \003(\014\022\020\n\010file_err\030\005 \001(\010\022\023\n\013losted_size\030" +
+      "\006 \001(\005\"u\n\017GPSSingleRecord\022\030\n\020client_recor" +
+      "d_id\030\001 \001(\t\022\016\n\006dataId\030\002 \001(\t\022\024\n\014serv_ops_r" +
+      "es\030\003 \001(\010\022\020\n\010img_data\030\004 \001(\014\022\020\n\010file_err\030\005" +
+      " \001(\010*2\n\010DataType\022\t\n\005T_INI\020\000\022\t\n\005T_GPS\020\001\022\020" +
+      "\n\014T_GPS_SINGLE\020\0022\237\003\n\017TransferService\022^\n\023" +
+      "transporterByStream\022\037.com.znjt.proto.Syn" +
+      "cDataRequest\032 .com.znjt.proto.SyncDataRe" +
+      "sponse\"\000(\0010\001\022X\n\021transporterBySync\022\037.com." +
+      "znjt.proto.SyncDataRequest\032 .com.znjt.pr" +
+      "oto.SyncDataResponse\"\000\022_\n\024transporterMul" +
+      "BySync\022!.com.znjt.proto.SyncMulImgReques" +
+      "t\032\".com.znjt.proto.SyncMulImgResponse\"\000\022" +
+      "q\n\032transporterMulSingleBySync\022\'.com.znjt" +
+      ".proto.SyncMulSingleImgRequest\032(.com.znj" +
+      "t.proto.SyncMulSingleImgResponse\"\000B!\n\016co" +
+      "m.znjt.protoB\rTransferProtoP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -108,30 +136,48 @@ public final class TransferProto {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_znjt_proto_SyncMulImgRequest_descriptor,
         new java.lang.String[] { "DataType", "GpsRecord", });
-    internal_static_com_znjt_proto_SyncDataRequest_descriptor =
+    internal_static_com_znjt_proto_SyncMulSingleImgResponse_descriptor =
       getDescriptor().getMessageTypes().get(2);
+    internal_static_com_znjt_proto_SyncMulSingleImgResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_com_znjt_proto_SyncMulSingleImgResponse_descriptor,
+        new java.lang.String[] { "DataType", "GpsSingleRecord", });
+    internal_static_com_znjt_proto_SyncMulSingleImgRequest_descriptor =
+      getDescriptor().getMessageTypes().get(3);
+    internal_static_com_znjt_proto_SyncMulSingleImgRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_com_znjt_proto_SyncMulSingleImgRequest_descriptor,
+        new java.lang.String[] { "DataType", "GpsSingleRecord", });
+    internal_static_com_znjt_proto_SyncDataRequest_descriptor =
+      getDescriptor().getMessageTypes().get(4);
     internal_static_com_znjt_proto_SyncDataRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_znjt_proto_SyncDataRequest_descriptor,
         new java.lang.String[] { "DataType", "IniRecord", "GpsRecord", "Record", });
     internal_static_com_znjt_proto_SyncDataResponse_descriptor =
-      getDescriptor().getMessageTypes().get(3);
+      getDescriptor().getMessageTypes().get(5);
     internal_static_com_znjt_proto_SyncDataResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_znjt_proto_SyncDataResponse_descriptor,
         new java.lang.String[] { "DataType", "IniRecord", "GpsRecord", "Record", });
     internal_static_com_znjt_proto_INIRecord_descriptor =
-      getDescriptor().getMessageTypes().get(4);
+      getDescriptor().getMessageTypes().get(6);
     internal_static_com_znjt_proto_INIRecord_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_znjt_proto_INIRecord_descriptor,
         new java.lang.String[] { "ClientRecordId", "DataId", "ServOpsRes", });
     internal_static_com_znjt_proto_GPSRecord_descriptor =
-      getDescriptor().getMessageTypes().get(5);
+      getDescriptor().getMessageTypes().get(7);
     internal_static_com_znjt_proto_GPSRecord_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_znjt_proto_GPSRecord_descriptor,
         new java.lang.String[] { "ClientRecordId", "DataId", "ServOpsRes", "ImgData", "FileErr", "LostedSize", });
+    internal_static_com_znjt_proto_GPSSingleRecord_descriptor =
+      getDescriptor().getMessageTypes().get(8);
+    internal_static_com_znjt_proto_GPSSingleRecord_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_com_znjt_proto_GPSSingleRecord_descriptor,
+        new java.lang.String[] { "ClientRecordId", "DataId", "ServOpsRes", "ImgData", "FileErr", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

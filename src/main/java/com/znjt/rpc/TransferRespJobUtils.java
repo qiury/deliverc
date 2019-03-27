@@ -5,6 +5,7 @@ import com.znjt.dao.beans.GPSTransferIniBean;
 import com.znjt.exs.ExceptionInfoUtils;
 import com.znjt.proto.DataType;
 import com.znjt.proto.GPSRecord;
+import com.znjt.proto.GPSSingleRecord;
 import com.znjt.proto.SyncDataResponse;
 import com.znjt.service.GPSTransferService;
 import org.slf4j.Logger;
@@ -107,6 +108,26 @@ public class TransferRespJobUtils {
         return runnable;
     }
 
+    /**
+     * 根据gpsrecord创建GPSTransferIniBean对象
+     * @param gpsRecord
+     * @return
+     */
+    public GPSTransferIniBean createGPSGpsTransferIniBeanFromGPSSingleRecord(GPSSingleRecord gpsRecord){
+        String cid = gpsRecord.getClientRecordId();
+        String did = gpsRecord.getDataId();
+        boolean file_err = gpsRecord.getFileErr();
+        boolean opsres = gpsRecord.getServOpsRes();
+        GPSTransferIniBean gpsTransferIniBean = null;
+        //后台成功进行了处理的记录才会被更新
+        if(opsres) {
+            gpsTransferIniBean = new GPSTransferIniBean();
+            gpsTransferIniBean.setGpsid(cid);
+            gpsTransferIniBean.setFile_err(file_err);
+            gpsTransferIniBean.setImg_uploaded(opsres);
+        }
+        return  gpsTransferIniBean;
+    }
     /**
      * 根据gpsrecord创建GPSTransferIniBean对象
      * @param gpsRecord

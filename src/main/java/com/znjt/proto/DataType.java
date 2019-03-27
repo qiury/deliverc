@@ -16,6 +16,10 @@ public enum DataType
    * <code>T_GPS = 1;</code>
    */
   T_GPS(1),
+  /**
+   * <code>T_GPS_SINGLE = 2;</code>
+   */
+  T_GPS_SINGLE(2),
   UNRECOGNIZED(-1),
   ;
 
@@ -27,6 +31,10 @@ public enum DataType
    * <code>T_GPS = 1;</code>
    */
   public static final int T_GPS_VALUE = 1;
+  /**
+   * <code>T_GPS_SINGLE = 2;</code>
+   */
+  public static final int T_GPS_SINGLE_VALUE = 2;
 
 
   public final int getNumber() {
@@ -49,6 +57,7 @@ public enum DataType
     switch (value) {
       case 0: return T_INI;
       case 1: return T_GPS;
+      case 2: return T_GPS_SINGLE;
       default: return null;
     }
   }

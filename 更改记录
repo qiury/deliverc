@@ -135,3 +135,6 @@ alter table acc add id bigint not null primary key Auto_increment
 
 12. 在gps中添加total_losted_size字段，表示总计丢失文件的个数
 alter table gps add column total_losted_size tinyint not null default 0 comment '当前记录文件总计丢失个数'
+
+13. 注意：在gps表中，把original_url的默认值设置为null，而不是"NULL";
+
