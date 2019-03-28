@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.rmi.runtime.Log;
 
+import java.awt.*;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -21,13 +22,23 @@ import java.util.Optional;
 public class GPSTransferService {
     private Logger logger = LoggerFactory.getLogger(GPSTransferService.class);
     private GPSTransferDao dao = new GPSTransferDao();
+    private static String NO_IMAGE = "no image";
     /**
      * 获取没有上传的数据记录
      * @param pageSize
      * @return
      */
     public List<GPSTransferIniBean> findUnUpLoadGPSRecordDatas(String dbname,int pageSize){
-        return dao.findUnUpLoadGPSRecordDatas(dbname,pageSize);
+        List<GPSTransferIniBean> gpsTransferIniBeans = dao.findUnUpLoadGPSRecordDatas(dbname,pageSize);
+        //如果GPSTransferIniBean中的路径不是'no image'就设置未null
+        Optional.ofNullable(gpsTransferIniBeans).ifPresent(gps->{
+            gps.forEach(item->{
+                if(!NO_IMAGE.equals(item.getOriginalUrl())){
+                    item.setOriginalUrl(null);
+                }
+            });
+        });
+        return gpsTransferIniBeans;
     }
 
     /**

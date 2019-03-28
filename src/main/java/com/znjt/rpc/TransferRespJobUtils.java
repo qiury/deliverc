@@ -115,7 +115,6 @@ public class TransferRespJobUtils {
      */
     public GPSTransferIniBean createGPSGpsTransferIniBeanFromGPSSingleRecord(GPSSingleRecord gpsRecord){
         String cid = gpsRecord.getClientRecordId();
-        String did = gpsRecord.getDataId();
         boolean file_err = gpsRecord.getFileErr();
         boolean opsres = gpsRecord.getServOpsRes();
         GPSTransferIniBean gpsTransferIniBean = null;

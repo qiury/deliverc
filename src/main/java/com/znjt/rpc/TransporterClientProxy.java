@@ -6,8 +6,8 @@ import com.znjt.exs.ExceptionInfoUtils;
 import com.znjt.proto.*;
 import com.znjt.service.GPSTransferService;
 import com.znjt.utils.FileIOUtils;
+import com.znjt.utils.LoggerUtils;
 import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import io.grpc.netty.shaded.io.grpc.netty.NegotiationType;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
@@ -15,7 +15,6 @@ import io.grpc.stub.StreamObserver;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.rmi.runtime.Log;
 
 import java.io.FileNotFoundException;
 import java.time.Duration;
@@ -44,6 +43,9 @@ public class TransporterClientProxy {
     private Object monitor = new Object();
     private GPSTransferService gpsTransferService;
 
+    private long total_img_bytes_size = 0;
+    private long total_img_count = 0;
+    private final long unit = 1024*1024;
 
     TransporterClientProxy(GPSTransferService localTransferService, String addr, int port, int max_batch_size) {
         this.addr = addr;
@@ -313,6 +315,7 @@ public class TransporterClientProxy {
         });
         return SyncMulSingleImgRequest.newBuilder().setDataTypeValue(DataType.T_GPS_SINGLE_VALUE).addAllGpsSingleRecord(gpsRecords).build();
     }
+
     /**
      * 创建同步批处理请求对象
      *
@@ -320,10 +323,14 @@ public class TransporterClientProxy {
      * @return
      */
     private SyncMulImgRequest createMulRequest(List<GPSTransferIniBean> gpsTransferIniBeans) {
+        total_img_bytes_size = 0;
+        total_img_count = 0;
         List<GPSRecord> gpsRecords = new ArrayList<>();
+        Instant instant = Instant.now();
         gpsTransferIniBeans.forEach(item -> {
             gpsRecords.add(createGPSRecordBean(item));
         });
+        LoggerUtils.info(logger,"共计读取图片 ["+total_img_count+"] 张,共计 ["+total_img_bytes_size/unit+"] MB，总计耗时 ["+Duration.between(instant,Instant.now()).toMillis()+"] ms");
         return SyncMulImgRequest.newBuilder().setDataType(DataType.T_GPS).addAllGpsRecord(gpsRecords).build();
     }
 
@@ -431,9 +438,11 @@ public class TransporterClientProxy {
                     if(StringUtils.isNotBlank(base_dir)){
                         item = base_dir+item;
                     }
+                    total_img_count++;
                     byte[] img = getEachImgData(data_id,item.trim());
                     Optional.ofNullable(img).ifPresent(image->{
                         imgs.add(image);
+                        total_img_bytes_size+=image.length;
                     });
                 });
             }

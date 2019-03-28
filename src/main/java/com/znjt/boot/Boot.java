@@ -40,6 +40,7 @@ public class Boot {
     private static boolean is_server = false;
     private static ClientBoot clientBoot;
     private static ExecutorService executorService = new ThreadPoolExecutor(1,1,0, TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(1));
+    //private static ExecutorService thriftExecutorService = new ThreadPoolExecutor(1,1,0, TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(1));
 
     /**
      * 系统启动
@@ -139,6 +140,12 @@ public class Boot {
                             ServerBoot.start_server(Integer.parseInt(properties.getProperty("upstrem.port").trim()));
                         }
                     });
+//                    thriftExecutorService.execute(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            ServerBoot.start_thrift(8899);
+//                        }
+//                    });
                     break;
                 }else{
                     System.err.println("输入的["+str+"]不合法，请您选择要启动的程序名称,请输入ser[ver]或cli[ent] ");
@@ -203,6 +210,24 @@ public class Boot {
                     ex.printStackTrace();
                 }
             }
+//            if(thriftExecutorService!=null){
+//                try {
+//                    if(!thriftExecutorService.isShutdown()){
+//                        thriftExecutorService.shutdown();;
+//                    }
+//                    if(!thriftExecutorService.awaitTermination(15,TimeUnit.SECONDS)){
+//                        thriftExecutorService.shutdownNow();
+//                    }else{
+//                        System.err.println("任务线程执行结束...");
+//                    }
+//                    if(!thriftExecutorService.isShutdown()){
+//                        System.err.println("等待任务线程执行结束...超时，执行强制退出");
+//                        Runtime.getRuntime().halt(-1);
+//                    }
+//                }catch (Exception ex){
+//                    ex.printStackTrace();
+//                }
+//            }
         }
     }
 

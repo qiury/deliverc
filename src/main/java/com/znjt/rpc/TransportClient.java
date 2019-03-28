@@ -2,6 +2,7 @@ package com.znjt.rpc;
 
 import com.znjt.dao.beans.GPSTransferIniBean;
 import com.znjt.service.GPSTransferService;
+import com.znjt.thrift.GPSImgClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,9 +16,11 @@ import java.util.Optional;
  */
 public class TransportClient {
     private TransporterClientProxy transporterClientProxy;
+    //private GPSImgClient gpsImgClient;
     private Logger logger = LoggerFactory.getLogger(TransportClient.class);
     public TransportClient(GPSTransferService localTransferService, String addr, int port, int max_batch_size) {
         transporterClientProxy = new TransporterClientProxy(localTransferService, addr, port, max_batch_size);
+        //gpsImgClient = new GPSImgClient(localTransferService,addr,8899);
         createShutdownHook();
     }
 
@@ -45,8 +48,9 @@ public class TransportClient {
                     logger.info("同步 {批量} 方式上传数据");
                 }
                 //通过同步批处理方式发送数据
-                //transporterClientProxy.transferData2ServerBySync4Batch(gpsTransferIniBeans);
-                transporterClientProxy.transferData2ServerBySyncSingleRecord4Batch(gpsTransferIniBeans);
+                transporterClientProxy.transferData2ServerBySync4Batch(gpsTransferIniBeans);
+                //transporterClientProxy.transferData2ServerBySyncSingleRecord4Batch(gpsTransferIniBeans);
+                //gpsImgClient.uploadImgRecords(gpsTransferIniBeans);
             }
 
         }

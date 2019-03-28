@@ -3,10 +3,11 @@ syntax = "proto3";
 package com.znjt.proto;
 
 option java_package = "com.znjt.proto";
-option optimize_for="SPEED";
+
 option java_outer_classname = "TransferProto";
 //每个消息生成一个文件
 option java_multiple_files = true;
+option optimize_for= SPEED;
 
 service TransferService{
     rpc transporterByStream(stream SyncDataRequest) returns (stream SyncDataResponse){}

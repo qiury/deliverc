@@ -15,7 +15,8 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class FileIOUtils {
     private static final AtomicInteger LOOPER = new AtomicInteger();
-
+    //100k
+    private static int BUFFER_SIZE = 1024*1024;
     private FileIOUtils(){
 
     }
@@ -26,7 +27,9 @@ public class FileIOUtils {
     public static byte[] getImgBytesDataFromPath(String path){
         byte[] bytes = null;
         if(path!=null){
-            try(InputStream is = new FileInputStream(path)){
+            //测试路径
+            // path="/Users/qiuzx/IdeaProjects/qiuzx/deliverc/imgs/ai.jpg";
+            try(InputStream is = new BufferedInputStream(new FileInputStream(path),BUFFER_SIZE)){
                 bytes = new byte[is.available()];
                 IOUtils.read(is,bytes);
             }catch (Exception ex){
@@ -42,8 +45,8 @@ public class FileIOUtils {
      * @param imgs
      */
     public static void saveBinaryImg2Disk(String path ,byte[] imgs){
-        try(OutputStream os = new FileOutputStream(path)) {
-            IOUtils.write(imgs,os);
+        try(BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(path),BUFFER_SIZE)) {
+            IOUtils.write(imgs,bos);
         }catch (Exception ex){
             throw new FileIOException(ex);
         }

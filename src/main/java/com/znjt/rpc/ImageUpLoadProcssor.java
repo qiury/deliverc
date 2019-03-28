@@ -8,10 +8,13 @@ import com.znjt.proto.GPSRecord;
 import com.znjt.proto.GPSSingleRecord;
 import com.znjt.service.GPSTransferService;
 import com.znjt.utils.FileIOUtils;
+import com.znjt.utils.LoggerUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 
 /**
@@ -22,6 +25,8 @@ import java.util.*;
  */
 public class ImageUpLoadProcssor {
     private static Logger logger = LoggerFactory.getLogger(ImageUpLoadProcssor.class);
+    private static long total_img_bytes_size = 0;
+    private static long total_img_count = 0;
 
     private ImageUpLoadProcssor() {
     }
@@ -112,6 +117,9 @@ public class ImageUpLoadProcssor {
         //存储对每一个GPSRecord保存到磁盘的结果
         List<GPSTransferIniBean> gpsTransferIniBeans = new ArrayList<>();
         List<GPSRecord> res_gps_records = new ArrayList<>();
+        Instant instant = Instant.now();
+        total_img_bytes_size = 0;
+        total_img_count = 0;
         //处理每一个GPSRecord对象
         Optional.ofNullable(gpsRecords).ifPresent(gr->{
             gr.forEach(item->{
@@ -120,7 +128,7 @@ public class ImageUpLoadProcssor {
                 });
             });
         });
-
+        LoggerUtils.info(logger,"总计处理["+total_img_count+"]张图像，共计大小["+total_img_bytes_size/(1024*1024)+"]MB,磁盘IO操作共计耗时["+ Duration.between(instant,Instant.now()).toMillis()+"]ms");
         try {
             doneImage2DB(gpsTransferService, gpsTransferIniBeans);
             //数据库更新成功，添加新的响应结果
@@ -173,8 +181,12 @@ public class ImageUpLoadProcssor {
         //客户端自身问题造成的数据丢失+本地原因丢失
         int losted_size = gpsRecords.getLostedSize();
         if(imgDataList!=null){
+            byte[] bytes;
             for(ByteString bs:imgDataList){
-                sipr = doneSingleImage2Disk(dataId,bs.toByteArray());
+                bytes = bs.toByteArray();
+                total_img_count++;
+                total_img_bytes_size+=bytes.length;
+                sipr = doneSingleImage2Disk(dataId,bytes);
                 if(sipr.isPersistent()){
                     if(StringUtils.isBlank(join_path)){
                         join_path = sipr.getRelPath();
@@ -236,7 +248,7 @@ public class ImageUpLoadProcssor {
      * @param imgs
      * @return
      */
-    private static SingleImgaeProcessResult doneSingleImage2Disk(String dataId, byte[] imgs){
+    public static SingleImgaeProcessResult doneSingleImage2Disk(String dataId, byte[] imgs){
         String sub_path = FileIOUtils.createRelativePath4Image(dataId);
         String path = TransferProtoImpl4Server.BASE_DIR + sub_path;
         boolean persistent = false;
@@ -255,7 +267,7 @@ public class ImageUpLoadProcssor {
         return new SingleImgaeProcessResult(false,persistent,path,sub_path);
     }
 
-    private static void doneImage2DB(GPSTransferService gpsTransferService, List<GPSTransferIniBean> gpsTransferIniBeans) {
+    public static void doneImage2DB(GPSTransferService gpsTransferService, List<GPSTransferIniBean> gpsTransferIniBeans) {
         //批量更新数据
         gpsTransferService.updateBatchGPSImgPath2DBRecord(Boot.UPSTREAM_DBNAME, gpsTransferIniBeans);
     }

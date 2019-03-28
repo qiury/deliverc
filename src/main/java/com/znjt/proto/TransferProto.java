@@ -109,8 +109,8 @@ public final class TransferProto {
       "t\032\".com.znjt.proto.SyncMulImgResponse\"\000\022" +
       "q\n\032transporterMulSingleBySync\022\'.com.znjt" +
       ".proto.SyncMulSingleImgRequest\032(.com.znj" +
-      "t.proto.SyncMulSingleImgResponse\"\000B!\n\016co" +
-      "m.znjt.protoB\rTransferProtoP\001b\006proto3"
+      "t.proto.SyncMulSingleImgResponse\"\000B#\n\016co" +
+      "m.znjt.protoB\rTransferProtoH\001P\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

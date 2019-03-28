@@ -72,7 +72,7 @@
         <!-- 通过ognl表达式获取value对应属性的值，将值赋值给新创建的变量，之后就可以在sql中引用这个变量-->
         <!--<bind name="ps" value="pageSize"/>-->
 
-        select GPSID,COLLECT_TIME,STATUS,LATITUDE,LONGITUDE,SPEED,AZIMUTH,DECLINATION,CREATE_TIME,UPLOAD_TIME,RESULT,AREA,dataid,UPLOADSTATUS
+        select GPSID,COLLECT_TIME,STATUS,LATITUDE,LONGITUDE,SPEED,AZIMUTH,DECLINATION,CREATE_TIME,UPLOAD_TIME,RESULT,AREA,dataid,UPLOADSTATUS,original_Url as originalUrl
          from gps where UPLOADSTATUS = 0 limit 0,#{pageSize}
     </select>
 
@@ -183,12 +183,12 @@
     </update>
 
     <insert databaseId="mysql" id="upLoadGPSRecordDatas2UpStream" keyProperty="id" >
-       insert into gps (GPSID,COLLECT_TIME,STATUS,LATITUDE,LONGITUDE,SPEED,AZIMUTH,DECLINATION,CREATE_TIME,UPLOAD_TIME,RESULT,AREA,dataid,UPLOADSTATUS)
+       insert into gps (GPSID,COLLECT_TIME,STATUS,LATITUDE,LONGITUDE,SPEED,AZIMUTH,DECLINATION,CREATE_TIME,UPLOAD_TIME,RESULT,AREA,dataid,UPLOADSTATUS,ORIGINAL_URL)
        values
         <foreach collection="list" item="item" index="index" separator=",">
             (#{item.gpsid},#{item.collect_time},#{item.status},#{item.latitude},
             #{item.longitude},#{item.speed},#{item.azimuth},#{item.declination},
-            #{item.create_time},#{item.upload_time},#{item.result},#{item.area},#{item.dataid},#{item.uploadstatus})
+            #{item.create_time},#{item.upload_time},#{item.result},#{item.area},#{item.dataid},#{item.uploadstatus},#{item.originalUrl})
         </foreach>
         ON DUPLICATE KEY UPDATE gpsid= values(gpsid)
     </insert>

@@ -16,4 +16,9 @@ public class UtilTest {
         paths = paths.replaceAll("(\r\n|\r|\n|\n\r)", "");
         System.err.println(paths);
     }
+
+    @Test
+    public void test03() throws Exception{
+        //Thumbnails.of("/Users/qiuzx/IdeaProjects/qiuzx/deliverc/imgs/ai.png").scale(1f).outputQuality(0.25f).toFile("/Users/qiuzx/IdeaProjects/qiuzx/deliverc/imgs/ai01.png");
+    }
 }

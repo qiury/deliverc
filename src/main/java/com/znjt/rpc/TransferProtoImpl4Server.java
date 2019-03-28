@@ -8,6 +8,7 @@ import com.znjt.exs.ExceptionInfoUtils;
 import com.znjt.proto.*;
 import com.znjt.service.GPSTransferService;
 import com.znjt.utils.FileIOUtils;
+import com.znjt.utils.LoggerUtils;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +65,7 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
         doneClientRequest(request,responseObserver);
         responseObserver.onCompleted();
     }
+
 
     /**
      * 同步处理请求，数据中每一个图像单独封装一个record对象，需要将这些对象进行合并。
@@ -144,7 +146,7 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
                     ops_res = true;
                     //说明没有记录被更新(数据重复上传)
                     if(res==0){
-                        logger.warn("Warn：路径在"+transferIniBean.getOriginalUrl()+"图像，名称为["+gpsRecord.getDataId()+".jgp]已经存在，进行去重操作...");
+                        LoggerUtils.warn(logger,"Warn：路径在"+transferIniBean.getOriginalUrl()+"图像，名称为["+gpsRecord.getDataId()+".jgp]已经存在，进行去重操作...");
                         ImageUpLoadProcssor.iterDelFiles(transferIniBean.getOriginalUrl());
                     }
                 }catch (Exception ex){
