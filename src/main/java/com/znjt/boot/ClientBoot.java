@@ -164,13 +164,36 @@ public class ClientBoot {
         long invoke_time = 0;
         boolean by_sync_single = true;
         logger.info("检查是否存在要上传的gps图像数据...");
-        List<GPSTransferIniBean> recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas(Boot.DOWNSTREAM_DBNAME, Boot.IMAGE_BATCH_SIZE);
+        int dync_batch_size = Boot.IMAGE_BATCH_SIZE;
+        List<GPSTransferIniBean> recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas(Boot.DOWNSTREAM_DBNAME, dync_batch_size);
         invoke_time++;
+        long uplaod_speed = -1;
         while (recordDatas != null && recordDatas.size() > 0) {
             limiting();
             logger.info("开始上传gps图像数据...[" + recordDatas.size() + "]条");
-            client.uploadBigDataByRPC(recordDatas,by_sync_single);
-            recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas(Boot.DOWNSTREAM_DBNAME, Boot.IMAGE_BATCH_SIZE);
+            //上传图像，返回上传的速率
+            uplaod_speed = client.uploadBigDataByRPC(recordDatas,by_sync_single);
+            //对批量上传的图像数据进行速度判断，如果速度达不到就自动降低批量上传的大小
+            if(!by_sync_single){
+                if(uplaod_speed>0){
+                    uplaod_speed = uplaod_speed/1024*100;//转换为100KB的单位
+                    //没有达到100KB每秒
+                    if(uplaod_speed==0){
+                        dync_batch_size = dync_batch_size/2;
+                    }else{
+                        dync_batch_size = dync_batch_size*2;
+                    }
+                    //现在批量最小值
+                    if(dync_batch_size<2){
+                        dync_batch_size = 2;
+                    }
+                    //限制批量最大值
+                    if(dync_batch_size>Boot.IMAGE_BATCH_SIZE){
+                        dync_batch_size = Boot.IMAGE_BATCH_SIZE;
+                    }
+                }
+            }
+            recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas(Boot.DOWNSTREAM_DBNAME, dync_batch_size);
             invoke_time++;
             /*
               前2次采用同步单条方式传输，防止前期没有来得及更新的数据造成了图像重复存储，造成服务器端出现僵尸数据

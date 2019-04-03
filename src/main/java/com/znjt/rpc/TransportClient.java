@@ -29,7 +29,7 @@ public class TransportClient {
      * @param gpsTransferIniBeans
      * @param by_sync_single 同步单条的方式上传数据
      */
-    public void uploadBigDataByRPC(List<GPSTransferIniBean> gpsTransferIniBeans,boolean by_sync_single) {
+    public long uploadBigDataByRPC(List<GPSTransferIniBean> gpsTransferIniBeans,boolean by_sync_single) {
         if (gpsTransferIniBeans != null && gpsTransferIniBeans.size() > 0) {
             gpsTransferIniBeans.forEach(item -> {
                 if (item.getDataid() == null) {
@@ -47,12 +47,13 @@ public class TransportClient {
                     logger.info("同步 {批量} 方式上传数据");
                 }
                 //通过同步批处理方式发送数据
-                transporterClientProxy.transferData2ServerBySync4Batch(gpsTransferIniBeans);
+                return transporterClientProxy.transferData2ServerBySync4Batch(gpsTransferIniBeans);
                 //transporterClientProxy.transferData2ServerBySyncSingleRecord4Batch(gpsTransferIniBeans);
                 //gpsImgClient.uploadImgRecords(gpsTransferIniBeans);
             }
 
         }
+        return -1;
     }
 
 
