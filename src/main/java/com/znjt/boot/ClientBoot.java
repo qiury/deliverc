@@ -164,8 +164,10 @@ public class ClientBoot {
         long invoke_time = 0;
         boolean by_sync_single = true;
         logger.info("检查是否存在要上传的gps图像数据...");
-        int dync_batch_size = Boot.IMAGE_BATCH_SIZE;
-        List<GPSTransferIniBean> recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas(Boot.DOWNSTREAM_DBNAME, dync_batch_size);
+
+        //开始批上传的速度控制在2条，如果带宽准许，会逐步提升上传记录记录数。
+        int dync_batch_size = 2;
+        List<GPSTransferIniBean> recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas(Boot.DOWNSTREAM_DBNAME, Boot.IMAGE_BATCH_SIZE);
         invoke_time++;
         long uplaod_speed = -1;
         while (recordDatas != null && recordDatas.size() > 0) {
