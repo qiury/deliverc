@@ -38,6 +38,8 @@ public class Boot {
     public static int PRE_UPLOAD_IMAGE_BY_SYNC_SINGLE_TIMES = 2;
     private static final int try_use_days = 45;
     private static boolean is_server = false;
+    private static boolean allow_upload_img = true;
+    private static String ip_blacklist = "";
     private static ClientBoot clientBoot;
     private static ExecutorService executorService = new ThreadPoolExecutor(1,1,0, TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(1));
     //private static ExecutorService thriftExecutorService = new ThreadPoolExecutor(1,1,0, TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(1));
@@ -85,6 +87,17 @@ public class Boot {
                     FRAME_MAX_SIXE = Integer.parseInt(param)*1024*1024;
                 }
             }
+            param = prop.getProperty("allow_upload_img");
+            if(StringUtils.isNotBlank(param)){
+                allow_upload_img = Boolean.parseBoolean(param);
+            }
+            param = prop.getProperty("ip_balck_list");
+            if(StringUtils.isNotBlank(param)){
+                ip_blacklist = param;
+            }
+            if(!allow_upload_img){
+                ip_blacklist = "*";
+            }
         });
     }
 
@@ -123,7 +136,7 @@ public class Boot {
                     //启动客户端程序
                     executorService.execute(()->{
                         clientBoot = new ClientBoot();
-                        clientBoot.start_client_jobs(properties.getProperty("upstrem.ip"),Integer.parseInt(properties.getProperty("upstrem.port").trim()));
+                        clientBoot.start_client_jobs(properties.getProperty("upstrem.ip"),Integer.parseInt(properties.getProperty("upstrem.port").trim()),ip_blacklist);
                     });
                     break;
                 }else if(str.trim().startsWith("ser")){

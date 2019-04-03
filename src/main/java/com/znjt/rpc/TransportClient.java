@@ -40,7 +40,6 @@ public class TransportClient {
                 if(logger.isInfoEnabled()){
                     logger.info("同步 {单条} 方式上传数据");
                 }
-
                 //通过同步单条的方式处理
                 transporterClientProxy.transferData2ServerBySync(gpsTransferIniBeans);
             }else {

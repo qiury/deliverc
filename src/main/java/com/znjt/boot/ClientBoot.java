@@ -4,6 +4,7 @@ import com.znjt.dao.beans.ACCTransferIniBean;
 import com.znjt.dao.beans.GPSTransferIniBean;
 import com.znjt.net.NetQuality;
 import com.znjt.net.NetStatusUtils;
+import com.znjt.net.NetUtils;
 import com.znjt.rpc.TransportClient;
 import com.znjt.service.ACCTransferService;
 import com.znjt.service.GPSTransferService;
@@ -29,6 +30,7 @@ public class ClientBoot {
 
     private static ScheduledExecutorService scheduledExecutorService = new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors()*4, new DefaultThreadFactory());
     private String server_ip = null;
+    private String ip_pattern = null;
     private int server_port = 9898;
     //网络是否准许连接（是否畅通）
     private volatile boolean net_allowed_connect = false;
@@ -38,16 +40,16 @@ public class ClientBoot {
     private TransportClient client;
     private static  boolean RATE_LIMITING = true;
 
-
     /**
      * 启动客户端任务
      *
      * @param server_ip
      * @param server_port
      */
-    public void start_client_jobs(String server_ip, int server_port) {
+    public void start_client_jobs(String server_ip, int server_port,String ip_pattern) {
         this.server_ip = server_ip;
         this.server_port = server_port;
+        this.ip_pattern = ip_pattern;
         if (server_ip == null || server_ip.equals("")) {
             throw new RuntimeException("IP地址[" + server_ip + "]不合法，无法启动客户端");
         }
@@ -137,7 +139,15 @@ public class ClientBoot {
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (net_allowed_connect) {
                 try {
-                    start_monitor_gps_img();
+                    if(!"*".equals(ip_pattern)){
+                        if(NetUtils.is_inner_network_ip(ip_pattern)){
+                            start_monitor_gps_img();
+                        }else {
+                            LoggerUtils.info(logger,"当前网络环境为不准许上传图像数据.");
+                        }
+                    }else{
+                        LoggerUtils.info(logger,"当前环境禁止执行图像上传操作");
+                    }
                 }catch (Exception ex){
                     ex.printStackTrace();
                 }

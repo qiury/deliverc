@@ -288,7 +288,10 @@ public class TransporterClientProxy {
             for (GPSTransferIniBean item : datas) {
                 SyncDataRequest request = createRequestObj(item);
                 try {
+                    Instant instant = Instant.now();
+                    LoggerUtils.info(logger,"开始上传一条记录的图像到Savle...包含 "+request.getGpsRecord().getImgDataCount()+" 张图像.");
                     SyncDataResponse response = getSyncStub().transporterBySync(request);
+                    LoggerUtils.info(logger,"上传一条记录的图像到Savle...结束，共计耗时："+ Duration.between(instant,Instant.now()).toMillis()+" ms");
                     if (response.getDataType() == DataType.T_GPS) {
                         GPSRecord record = response.getGpsRecord();
                         Optional.ofNullable(record).ifPresent(rd -> {
