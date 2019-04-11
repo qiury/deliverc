@@ -1,11 +1,13 @@
 package com.znjt.boot;
 
+import com.mysql.jdbc.log.LogUtils;
 import com.znjt.dao.beans.ACCTransferIniBean;
 import com.znjt.dao.beans.GPSTransferIniBean;
 import com.znjt.net.NetQuality;
 import com.znjt.net.NetStatusUtils;
 import com.znjt.net.NetUtils;
 import com.znjt.rpc.TransportClient;
+import com.znjt.rpc.UpLoadReson;
 import com.znjt.service.ACCTransferService;
 import com.znjt.service.GPSTransferService;
 import com.znjt.utils.LoggerUtils;
@@ -39,6 +41,8 @@ public class ClientBoot {
     private GPSTransferService gpsTransferService;
     private TransportClient client;
     private static  boolean RATE_LIMITING = true;
+    private static final int INC_STEP = 5;
+    private static final long TIME_WATER_LINE = 1500;
 
     /**
      * 启动客户端任务
@@ -156,6 +160,7 @@ public class ClientBoot {
         }, 3, 10, TimeUnit.SECONDS);
     }
 
+
     /**
      * 检查gps中未上传的img信息
      */
@@ -169,21 +174,58 @@ public class ClientBoot {
         int dync_batch_size = 2;
         List<GPSTransferIniBean> recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas(Boot.DOWNSTREAM_DBNAME, Boot.IMAGE_BATCH_SIZE);
         invoke_time++;
+        UpLoadReson upLoadReson;
         long uplaod_speed = -1;
+        long consumerMils = -1;
         while (recordDatas != null && recordDatas.size() > 0) {
             limiting();
             logger.info("开始上传gps图像数据...[" + recordDatas.size() + "]条");
             //上传图像，返回上传的速率
-            uplaod_speed = client.uploadBigDataByRPC(recordDatas,by_sync_single);
+            upLoadReson = client.uploadBigDataByRPC(recordDatas,by_sync_single);
             //对批量上传的图像数据进行速度判断，如果速度达不到就自动降低批量上传的大小
-            if(!by_sync_single){
+            if(!by_sync_single&&upLoadReson!=null){
+//                uplaod_speed = upLoadReson.getSpeed();
+//                if(uplaod_speed>0){
+//                    //转换为100KB的单位
+//                    uplaod_speed = uplaod_speed/(1024*100);
+//                    //没有达到100KB每秒
+//                    if(uplaod_speed==0){
+//                        dync_batch_size = dync_batch_size/2;
+//                    }else{
+//                        dync_batch_size = dync_batch_size*2;
+//                    }
+//                    //现在批量最小值
+//                    if(dync_batch_size<2){
+//                        dync_batch_size = 2;
+//                    }
+//                    //限制批量最大值
+//                    if(dync_batch_size>Boot.IMAGE_BATCH_SIZE){
+//                        dync_batch_size = Boot.IMAGE_BATCH_SIZE;
+//                    }
+//                }
+                uplaod_speed = upLoadReson.getSpeed();
+
                 if(uplaod_speed>0){
-                    uplaod_speed = uplaod_speed/1024*100;//转换为100KB的单位
+                    //转换为100KB的单位
+                    uplaod_speed = uplaod_speed/(1024*100);
+                    //获取消耗时间
+                    consumerMils = upLoadReson.getConsumeMins();
+                    StringBuilder sb = new StringBuilder();
                     //没有达到100KB每秒
-                    if(uplaod_speed==0){
+                    if(uplaod_speed==0||consumerMils>TIME_WATER_LINE){
+                        //快速降低批量大小
                         dync_batch_size = dync_batch_size/2;
+                        if(uplaod_speed<=0){
+                            sb.append("上传速度["+uplaod_speed+"]KB,小余100KB. ");
+                        }
+                        if(consumerMils>TIME_WATER_LINE){
+                            sb.append("上传耗时["+consumerMils+"]ms,大于["+TIME_WATER_LINE+"]ms.");
+                        }
+                        LoggerUtils.info(logger,sb.toString() + " 尝试减少单次批量记录为原来的一半");
                     }else{
-                        dync_batch_size = dync_batch_size*2;
+                        //尝试递增
+                        dync_batch_size = dync_batch_size+=INC_STEP;
+                        LoggerUtils.info(logger,"网络带宽良好,耗时小余"+TIME_WATER_LINE+"ms，尝试增加单次批量记录["+INC_STEP+"]");
                     }
                     //现在批量最小值
                     if(dync_batch_size<2){
@@ -194,7 +236,9 @@ public class ClientBoot {
                         dync_batch_size = Boot.IMAGE_BATCH_SIZE;
                     }
                 }
+
             }
+
             recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas(Boot.DOWNSTREAM_DBNAME, dync_batch_size);
             invoke_time++;
             /*

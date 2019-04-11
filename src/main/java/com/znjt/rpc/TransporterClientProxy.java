@@ -124,21 +124,28 @@ public class TransporterClientProxy {
         return blockingStub;
     }
 
-    private long calNetSpeed(long total_byts,long mins){
-        long speed = total_byts;
-        if(mins>0){
-            speed = total_byts/mins;
-        }
-        return speed;
-    }
+    /**
+     *
+     * @param total_byts
+     * @param mins 毫秒数
+     * @return
+     */
+//    private long calNetSpeed(long total_byts,long mins){
+//        long speed = total_byts;
+//        if(mins>0){
+//            speed = total_byts*1000/mins;
+//        }
+//        return speed;
+//    }
 
     /**
      * 同步批量上传数据
      *
      * @param datas
      */
-    public long transferData2ServerBySync4Batch(List<GPSTransferIniBean> datas) {
-        long speed = -1;//上传的速度
+    public UpLoadReson transferData2ServerBySync4Batch(List<GPSTransferIniBean> datas) {
+        UpLoadReson upLoadReson = new UpLoadReson();
+
         if (datas != null && datas.size() > 0) {
             if(logger.isWarnEnabled()) {
                 logger.warn("开始组织需要上传的[" + datas.size() + "]含图像的记录给服务器");
@@ -155,12 +162,12 @@ public class TransporterClientProxy {
                 Instant beg = Instant.now();
                 syncMulImgResponse = syncStub.transporterMulBySync(syncMulImgRequest);
                 long cons = Duration.between(beg,Instant.now()).toMillis();
-                speed = calNetSpeed(wrapper.getTotal_bys(),cons);
+
+                upLoadReson.setConsumeMins(cons);
+                upLoadReson.setTotalBytes(wrapper.getTotal_bys());
                 if(logger.isWarnEnabled()) {
-                    logger.warn("服务器响应[" + datas.size() + "]含图像的记录处理完成，耗时["+cons+"] ms.网络传输速度["+speed+"]Bps");
+                    logger.warn("服务器响应[" + datas.size() + "]含图像的记录处理完成，耗时["+cons+"] ms.");
                 }
-
-
             } catch (Exception ex) {
                 boolean print = true;
                 if (ex instanceof StatusRuntimeException) {
@@ -176,7 +183,7 @@ public class TransporterClientProxy {
                 if (print) {
                     logger.warn(ExceptionInfoUtils.getExceptionCauseInfo(ex));
                 }
-                return -1;
+                return upLoadReson;
             }
             if (syncMulImgResponse.getDataType() == DataType.T_GPS) {
                 List<GPSRecord> records = syncMulImgResponse.getGpsRecordList();
@@ -186,7 +193,7 @@ public class TransporterClientProxy {
                 logger.warn("批量上传的后续完成，所有操作共计耗时[" + Duration.between(instant, Instant.now()).toMillis() + "] ms");
             }
         }
-        return speed;
+        return upLoadReson;
     }
 
     /**

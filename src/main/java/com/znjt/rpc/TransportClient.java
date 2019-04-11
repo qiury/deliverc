@@ -29,7 +29,7 @@ public class TransportClient {
      * @param gpsTransferIniBeans
      * @param by_sync_single 同步单条的方式上传数据
      */
-    public long uploadBigDataByRPC(List<GPSTransferIniBean> gpsTransferIniBeans,boolean by_sync_single) {
+    public UpLoadReson uploadBigDataByRPC(List<GPSTransferIniBean> gpsTransferIniBeans,boolean by_sync_single) {
         if (gpsTransferIniBeans != null && gpsTransferIniBeans.size() > 0) {
             gpsTransferIniBeans.forEach(item -> {
                 if (item.getDataid() == null) {
@@ -53,7 +53,7 @@ public class TransportClient {
             }
 
         }
-        return -1;
+        return null;
     }
 
 

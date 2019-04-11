@@ -51,15 +51,15 @@
             </Policies>
             <!--
                用来指定同一个文件夹下最多有几个日志文件时开始删除最旧的，创建新的(通过max属性)
-               DefaultRolloverStrategy属性如不设置，则默认为最多同一文件夹下7个文件，这里设置了40
+               DefaultRolloverStrategy属性如不设置，则默认为最多同一文件夹下7个文件，这里设置了100
             -->
-            <DefaultRolloverStrategy max="40">
+            <DefaultRolloverStrategy max="100">
                 <!-- 日志文件保留的个数-->
                 <Delete basePath="${LOG_HOME}" maxDepth="3">
                     <!-- 要删除的日志的名称匹配 -->
                     <IfFileName glob="*/DataSource*.log.zip" />
                     <!-- 保留文件的天数 -->
-                    <IfLastModified age="6d" />
+                    <IfLastModified age="30d" />
                     <!-- 保留文件的个数 -->
                     <!--<IfAccumulatedFileCount  exceeds="10" />-->
                 </Delete>
@@ -81,13 +81,13 @@
                     <OnStartupTriggeringPolicy />
                 -->
             </Policies>
-            <DefaultRolloverStrategy max="20">
+            <DefaultRolloverStrategy max="120">
                 <!-- 日志文件保留的个数-->
                 <Delete basePath="${LOG_HOME}" maxDepth="3">
                     <!-- 要删除的日志的名称匹配 -->
                     <IfFileName glob="*/System*.log.zip" />
                     <!-- 保留文件的天数 -->
-                    <IfLastModified age="6d" />
+                    <IfLastModified age="30d" />
                     <!-- 保留文件的个数 -->
                     <!--<IfAccumulatedFileCount  exceeds="10" />-->
                 </Delete>
@@ -108,13 +108,13 @@
                 <OnStartupTriggeringPolicy />
                 -->
             </Policies>
-            <DefaultRolloverStrategy max="20">
+            <DefaultRolloverStrategy max="120">
                 <!-- 日志文件保留的个数-->
                 <Delete basePath="${LOG_HOME}" maxDepth="3">
                     <!-- 要删除的日志的名称匹配 -->
                     <IfFileName glob="*/NetWork*.log.zip" />
                     <!-- 保留文件的天数 -->
-                    <IfLastModified age="6d" />
+                    <IfLastModified age="30d" />
                     <!-- 保留文件的个数 -->
                     <!--<IfAccumulatedFileCount  exceeds="10" />-->
                 </Delete>
@@ -135,13 +135,13 @@
                 <OnStartupTriggeringPolicy />
                 -->
             </Policies>
-            <DefaultRolloverStrategy max="20">
+            <DefaultRolloverStrategy max="120">
                 <!-- 日志文件保留的个数-->
                 <Delete basePath="${LOG_HOME}" maxDepth="3">
                     <!-- 要删除的日志的名称匹配 -->
                     <IfFileName glob="*/ExecSql*.log.zip" />
                     <!-- 保留文件的天数 -->
-                    <IfLastModified age="6d" />
+                    <IfLastModified age="30d" />
                     <!-- 保留文件的个数 -->
                     <!--<IfAccumulatedFileCount  exceeds="10" />-->
                 </Delete>
@@ -162,13 +162,13 @@
                 <OnStartupTriggeringPolicy />
                 -->
             </Policies>
-            <DefaultRolloverStrategy max="20">
+            <DefaultRolloverStrategy max="120">
                 <!-- 日志文件保留的个数-->
                 <Delete basePath="${LOG_HOME}" maxDepth="3">
                     <!-- 要删除的日志的名称匹配 -->
                     <IfFileName glob="*/Async*.log.zip" />
                     <!-- 保留文件的天数 -->
-                    <IfLastModified age="6d" />
+                    <IfLastModified age="30d" />
                     <!-- 保留文件的个数 -->
                     <!--<IfAccumulatedFileCount  exceeds="10" />-->
                 </Delete>
