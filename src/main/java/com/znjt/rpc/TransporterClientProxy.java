@@ -7,10 +7,13 @@ import com.znjt.proto.*;
 import com.znjt.service.GPSTransferService;
 import com.znjt.utils.FileIOUtils;
 import com.znjt.utils.LoggerUtils;
+import io.grpc.Deadline;
 import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import io.grpc.netty.shaded.io.grpc.netty.NegotiationType;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
+import io.grpc.netty.shaded.io.netty.channel.ChannelOption;
 import io.grpc.stub.StreamObserver;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -42,6 +45,7 @@ public class TransporterClientProxy {
     private TransferRespJobUtils transferRespJobUtils;
     private Object monitor = new Object();
     private GPSTransferService gpsTransferService;
+    private static int DEADLINE = 30;
 
     private long total_img_bytes_size = 0;
     private long total_img_count = 0;
@@ -70,10 +74,18 @@ public class TransporterClientProxy {
                             .negotiationType(NegotiationType.PLAINTEXT)
                             .keepAliveTime(1, TimeUnit.MINUTES)
                             .keepAliveTimeout(5, TimeUnit.SECONDS)
+                            //.maxRetryAttempts()
                             //.usePlaintext() 过期，建议使用negotiationType
                             .keepAliveWithoutCalls(true)
                             .build();
+
                 }
+            }
+        }
+        //验证channel是否是正常未被关闭的
+        if(managedChannel!=null){
+            if (managedChannel.isShutdown() || managedChannel.isTerminated()) {
+                managedChannel = getManagedChannel();
             }
         }
         return managedChannel;
@@ -90,17 +102,19 @@ public class TransporterClientProxy {
                 if (stub == null) {
                     ManagedChannel channel = getManagedChannel();
                     if (channel != null) {
-                        if (!(channel.isTerminated() || channel.isShutdown())) {
-                            stub = TransferServiceGrpc.newStub(channel);
-                        }
+//                        if (!(channel.isTerminated() || channel.isShutdown())) {
+//                            stub = TransferServiceGrpc.newStub(channel);
+//                        }
+                        //getManagedChannel中已经判断channel的有效性
+                        stub = TransferServiceGrpc.newStub(channel);
                     }
                 }
             }
         }
         //DEADLINE时间过期，我们可以为每个Stub配置deadline时间，么如果此stub被使用的时长超过此值（不是空闲的时间），将不能再发送请求，此时我们应该创建新的Stub
         //withDeadlineAfter() 会在原有的 stub 基础上新建一个 stub，然后如果我们为每次 RPC 请求都单独创建一个有设置 deadline 的 stub，就可以实现所谓单个 RPC 请求的 timeout 设置
-        //return stub.withDeadlineAfter(10, TimeUnit.SECONDS);
-        return stub;
+        return stub.withDeadlineAfter(DEADLINE, TimeUnit.SECONDS);
+        //return stub;
     }
 
     /**
@@ -114,14 +128,15 @@ public class TransporterClientProxy {
                 if (blockingStub == null) {
                     ManagedChannel channel = getManagedChannel();
                     if (channel != null) {
-                        if (!(channel.isTerminated() || channel.isShutdown())) {
-                            blockingStub = TransferServiceGrpc.newBlockingStub(channel);
-                        }
+//                        if (!(channel.isTerminated() || channel.isShutdown())) {
+//                            blockingStub = TransferServiceGrpc.newBlockingStub(channel);
+//                        }
+                        blockingStub = TransferServiceGrpc.newBlockingStub(channel);
                     }
                 }
             }
         }
-        return blockingStub;
+        return blockingStub.withDeadlineAfter(DEADLINE,TimeUnit.SECONDS);
     }
 
     /**
@@ -168,26 +183,24 @@ public class TransporterClientProxy {
                 if(logger.isWarnEnabled()) {
                     logger.warn("服务器响应[" + datas.size() + "]含图像的记录处理完成，耗时["+cons+"] ms.");
                 }
-            } catch (Exception ex) {
+            } catch (StatusRuntimeException ex) {
                 boolean print = true;
-                if (ex instanceof StatusRuntimeException) {
-                    StatusRuntimeException se = (StatusRuntimeException) ex;
-                    String em = se.getMessage();
-                    if (StringUtils.isNotBlank(em) && em.contains("UNAVAILABLE: io exception")) {
-                        if(logger.isWarnEnabled()) {
-                            logger.warn("Server 服务不可用，请检查Server服务是否开启");
-                        }
-                        print = false;
+                String em = ex.getMessage();
+                if (StringUtils.isNotBlank(em) && em.contains("UNAVAILABLE: io exception")) {
+                    if(logger.isWarnEnabled()) {
+                        logger.warn("Server 服务不可用，请检查Server服务是否开启");
                     }
+                    print = false;
                 }
                 if (print) {
                     logger.warn(ExceptionInfoUtils.getExceptionCauseInfo(ex));
                 }
-                return upLoadReson;
+                throw ex;
             }
             if (syncMulImgResponse.getDataType() == DataType.T_GPS) {
                 List<GPSRecord> records = syncMulImgResponse.getGpsRecordList();
-                doneSyncResponseDatas(records);
+                int updates = doneSyncResponseDatas(records);
+                upLoadReson.setUpdate_records(updates);
             }
             if(logger.isWarnEnabled()) {
                 logger.warn("批量上传的后续完成，所有操作共计耗时[" + Duration.between(instant, Instant.now()).toMillis() + "] ms");
@@ -209,6 +222,7 @@ public class TransporterClientProxy {
             Instant instant = Instant.now();
             SyncMulSingleImgRequest syncMulSingleImgRequest = createMulSingleRequest(datas);
             TransferServiceGrpc.TransferServiceBlockingStub syncStub = getSyncStub();
+
             SyncMulSingleImgResponse syncMulSingleImgResponse = null;
             try {
                 if(logger.isWarnEnabled()) {
@@ -278,10 +292,10 @@ public class TransporterClientProxy {
      *
      * @param records
      */
-    private void doneSyncResponseDatas(List<GPSRecord> records) {
+    private int doneSyncResponseDatas(List<GPSRecord> records) {
         if (records == null) {
             logger.warn("处理同步请求结果的doneSyncResponseDatas()接收到Null的参数，无法处理..直接忽略");
-            return;
+            return 0;
         }
         final List<GPSTransferIniBean> dbs = new ArrayList<>();
         Optional.ofNullable(records).ifPresent(rds -> {
@@ -293,11 +307,10 @@ public class TransporterClientProxy {
             });
         });
         if (dbs.size() > 0) {
-            if(logger.isDebugEnabled()) {
-                logger.debug("批量更新图像数据上传结果，影响记录数[ " + dbs.size() + " ]条");
-            }
             gpsTransferService.updateCurrentUploadedSuccessGPSImgRecords(Boot.DOWNSTREAM_DBNAME, dbs);
+            LoggerUtils.info(logger,"批量更新图像数据上传结果，影响记录数[ " + dbs.size() + " ]条");
         }
+        return dbs.size();
     }
 
     /**
@@ -312,7 +325,8 @@ public class TransporterClientProxy {
                 try {
                     Instant instant = Instant.now();
                     LoggerUtils.info(logger,"开始上传一条记录的图像到Savle...包含 "+request.getGpsRecord().getImgDataCount()+" 张图像.");
-                    SyncDataResponse response = getSyncStub().transporterBySync(request);
+                    TransferServiceGrpc.TransferServiceBlockingStub stubs = getSyncStub();
+                    SyncDataResponse response = stubs.transporterBySync(request);
                     LoggerUtils.info(logger,"上传一条记录的图像到Savle...结束，共计耗时："+ Duration.between(instant,Instant.now()).toMillis()+" ms");
                     if (response.getDataType() == DataType.T_GPS) {
                         GPSRecord record = response.getGpsRecord();
@@ -320,8 +334,8 @@ public class TransporterClientProxy {
                             doneSyncResponseDatas(Arrays.asList(rd));
                         });
                     }
-                } catch (Exception ex) {
-                    logger.warn(ExceptionInfoUtils.getExceptionCauseInfo(ex));
+                } catch (StatusRuntimeException ex) {
+                    throw ex;
                 }
             }
         }
@@ -512,7 +526,6 @@ public class TransporterClientProxy {
             for (GPSTransferIniBean item : datas) {
                 requestObserver.onNext(createRequestObj(item));
                 long remain = responseStreamObserver.incNewJobCounter();
-
                 if (logger.isDebugEnabled()) {
                     logger.debug("Inc Job .... 还剩下[" + remain + "]个图像上传请求没有收到服务端的响应");
                 }

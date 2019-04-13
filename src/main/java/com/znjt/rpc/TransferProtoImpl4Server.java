@@ -9,6 +9,8 @@ import com.znjt.proto.*;
 import com.znjt.service.GPSTransferService;
 import com.znjt.utils.FileIOUtils;
 import com.znjt.utils.LoggerUtils;
+import io.grpc.Context;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +42,10 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
      */
     @Override
     public void transporterMulBySync(SyncMulImgRequest request, StreamObserver<SyncMulImgResponse> responseObserver) {
+        //阻塞造成的超时
+        if(check_timeout(responseObserver)){
+            return;
+        }
         if(request.getDataType()==DataType.T_GPS){
             if(logger.isWarnEnabled()) {
                 logger.warn("开始执行同步批处理客户端上传图像的请求操作");
@@ -62,10 +68,21 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
      */
     @Override
     public void transporterBySync(SyncDataRequest request, StreamObserver<SyncDataResponse> responseObserver) {
+        if(check_timeout(responseObserver)){
+            return;
+        }
         doneClientRequest(request,responseObserver);
         responseObserver.onCompleted();
     }
 
+    private boolean check_timeout(StreamObserver responseObserver){
+        //阻塞造成的超时
+        if (Context.current().isCancelled()) {
+            responseObserver.onError(Status.CANCELLED.withDescription("Cancelled by client").asRuntimeException());
+            return true;
+        }
+        return false;
+    }
 
     /**
      * 同步处理请求，数据中每一个图像单独封装一个record对象，需要将这些对象进行合并。
@@ -75,6 +92,9 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
 
     @Override
     public void transporterMulSingleBySync(SyncMulSingleImgRequest request, StreamObserver<SyncMulSingleImgResponse> responseObserver){
+        if(check_timeout(responseObserver)){
+            return;
+        }
         if(request.getDataType()==DataType.T_GPS_SINGLE) {
             Instant instant = Instant.now();
             if(logger.isWarnEnabled()) {
@@ -89,9 +109,6 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
         }
         responseObserver.onCompleted();
     }
-
-
-
 
     @Override
     public StreamObserver<SyncDataRequest> transporterByStream(StreamObserver<SyncDataResponse> responseObserver) {
@@ -124,6 +141,9 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
      * @param responseObserver
      */
     private void doneClientRequest(SyncDataRequest syncDataRequest, StreamObserver<SyncDataResponse> responseObserver) {
+        if(check_timeout(responseObserver)){
+            return;
+        }
         //GPS表
         if (syncDataRequest.getDataType() == DataType.T_GPS) {
             GPSRecord gpsRecord = syncDataRequest.getGpsRecord();

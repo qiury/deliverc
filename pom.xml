@@ -123,6 +123,13 @@
             <artifactId>pagehelper</artifactId>
             <version>5.1.8</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>27.1-jre</version>
+        </dependency>
+
+
 
     </dependencies>
 
@@ -150,15 +157,15 @@
                 <filtering>false</filtering>
             </resource>
             <!-- 控制资源文件的拷贝 -->
-            <resource>
-                <directory>src/main/resources</directory>
-                <includes>
-                    <include>**/*.properties</include>
-                    <include>**/*.xml</include>
-                </includes>
-                <filtering>false</filtering>
-                <targetPath>${project.build.directory}/config</targetPath>
-            </resource>
+            <!--<resource>-->
+                <!--<directory>src/main/resources</directory>-->
+                <!--<includes>-->
+                    <!--<include>**/*.properties</include>-->
+                    <!--<include>**/*.xml</include>-->
+                <!--</includes>-->
+                <!--<filtering>false</filtering>-->
+                <!--<targetPath>${project.build.directory}/config</targetPath>-->
+            <!--</resource>-->
         </resources>
         <plugins>
 

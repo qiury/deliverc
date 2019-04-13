@@ -3,15 +3,18 @@ package com.znjt.boot;
 import com.mysql.jdbc.log.LogUtils;
 import com.znjt.dao.beans.ACCTransferIniBean;
 import com.znjt.dao.beans.GPSTransferIniBean;
+import com.znjt.exs.ExceptionInfoUtils;
 import com.znjt.net.NetQuality;
 import com.znjt.net.NetStatusUtils;
 import com.znjt.net.NetUtils;
+import com.znjt.net.NetworkUtil;
 import com.znjt.rpc.TransportClient;
 import com.znjt.rpc.UpLoadReson;
 import com.znjt.service.ACCTransferService;
 import com.znjt.service.GPSTransferService;
 import com.znjt.utils.LoggerUtils;
 import io.grpc.netty.shaded.io.netty.util.concurrent.DefaultThreadFactory;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +36,7 @@ public class ClientBoot {
     private static ScheduledExecutorService scheduledExecutorService = new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors()*4, new DefaultThreadFactory());
     private String server_ip = null;
     private String ip_pattern = null;
+    private String inner_ip_pattern = null;
     private int server_port = 9898;
     //网络是否准许连接（是否畅通）
     private volatile boolean net_allowed_connect = false;
@@ -50,10 +54,11 @@ public class ClientBoot {
      * @param server_ip
      * @param server_port
      */
-    public void start_client_jobs(String server_ip, int server_port,String ip_pattern) {
+    public void start_client_jobs(String server_ip, int server_port,String ip_pattern,String inner_ip_pattern) {
         this.server_ip = server_ip;
         this.server_port = server_port;
         this.ip_pattern = ip_pattern;
+        this.inner_ip_pattern = inner_ip_pattern;
         if (server_ip == null || server_ip.equals("")) {
             throw new RuntimeException("IP地址[" + server_ip + "]不合法，无法启动客户端");
         }
@@ -143,14 +148,8 @@ public class ClientBoot {
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (net_allowed_connect) {
                 try {
-                    if(!"*".equals(ip_pattern)){
-                        if(NetUtils.is_inner_network_ip(ip_pattern)){
-                            start_monitor_gps_img();
-                        }else {
-                            LoggerUtils.info(logger,"当前网络环境为不准许上传图像数据.");
-                        }
-                    }else{
-                        LoggerUtils.info(logger,"当前环境禁止执行图像上传操作");
+                    if(check_net_status()) {
+                        start_monitor_gps_img();
                     }
                 }catch (Exception ex){
                     ex.printStackTrace();
@@ -161,6 +160,35 @@ public class ClientBoot {
     }
 
 
+    private boolean check_net_status(){
+        try {
+            if(!"*".equals(ip_pattern)){
+                String[] iips = inner_ip_pattern.split(",");
+                if(NetUtils.is_inner_network_ip(ip_pattern)){
+                    for (String iip : iips) {
+                        if(NetUtils.getLocalIp(iip)!=null){
+                            LoggerUtils.info(logger,"处于内部网络环境...准许图像上传");
+                            return true;
+                        }
+                    }
+                }else {
+                    for (String iip : iips) {
+                        String local_ip = NetUtils.getLocalIp(iip);
+                        if (StringUtils.isNotBlank(local_ip)) {
+                            LoggerUtils.info(logger, "处于外部环境和内部环境共存...准许图像上传，内部环境依据[" + local_ip + "]");
+                            return true;
+                        }
+                    }
+                    LoggerUtils.info(logger,"处于外部网络环境为不准许上传图像数据.");
+                }
+            }else{
+                LoggerUtils.info(logger,"当前环境禁止执行图像上传操作");
+            }
+        }catch (Exception ex){
+            LoggerUtils.error(logger,ExceptionInfoUtils.getExceptionCauseInfo(ex));
+        }
+        return false;
+    }
     /**
      * 检查gps中未上传的img信息
      */
@@ -169,19 +197,31 @@ public class ClientBoot {
         long invoke_time = 0;
         boolean by_sync_single = true;
         logger.info("检查是否存在要上传的gps图像数据...");
+        boolean has_err = false;
 
         //开始批上传的速度控制在2条，如果带宽准许，会逐步提升上传记录记录数。
         int dync_batch_size = 2;
         List<GPSTransferIniBean> recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas(Boot.DOWNSTREAM_DBNAME, Boot.IMAGE_BATCH_SIZE);
         invoke_time++;
-        UpLoadReson upLoadReson;
+        UpLoadReson upLoadReson = null;
         long uplaod_speed = -1;
         long consumerMils = -1;
         while (recordDatas != null && recordDatas.size() > 0) {
+            if(!check_net_status()){
+                break;
+            }
             limiting();
             logger.info("开始上传gps图像数据...[" + recordDatas.size() + "]条");
-            //上传图像，返回上传的速率
-            upLoadReson = client.uploadBigDataByRPC(recordDatas,by_sync_single);
+            try {
+                //上传图像
+                upLoadReson = client.uploadBigDataByRPC(recordDatas,by_sync_single);
+            }catch (Exception ex){
+                //上传图像出现任何异常都要终止本次任务，重新进入单步上传，放置图像重复上传
+                LoggerUtils.error(logger,ExceptionInfoUtils.getExceptionCauseInfo(ex));
+                has_err = true;
+                break;
+            }
+
             //对批量上传的图像数据进行速度判断，如果速度达不到就自动降低批量上传的大小
             if(!by_sync_single&&upLoadReson!=null){
 //                uplaod_speed = upLoadReson.getSpeed();
@@ -203,6 +243,11 @@ public class ClientBoot {
 //                        dync_batch_size = Boot.IMAGE_BATCH_SIZE;
 //                    }
 //                }
+                if(upLoadReson.getUpdate_records()==0){
+                    LoggerUtils.warn(logger,"批量同步图像到服务器，由于服务器后台数据验证原因没有入库，终止此次图像同步任务...[等待下次同步单条数据，进行尝试数据修复]");
+                    has_err = true;
+                    break;
+                }
                 uplaod_speed = upLoadReson.getSpeed();
 
                 if(uplaod_speed>0){
@@ -251,7 +296,12 @@ public class ClientBoot {
                 break;
             }
         }
-        logger.info("没有gps图像数据需要上传...");
+        if(has_err){
+            LoggerUtils.warn(logger,"图像传输出现超时异常，终止此次图像同步任务...");
+        }else {
+            LoggerUtils.info(logger,"没有gps图像数据需要上传...");
+        }
+
     }
 
     /**

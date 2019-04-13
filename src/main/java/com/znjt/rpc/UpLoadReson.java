@@ -11,6 +11,7 @@ public class UpLoadReson {
     //耗时 毫秒
     private long consumeMins;
 
+    private int update_records;
 
     public UpLoadReson(long totalBytes, long consumeMins) {
         this.totalBytes = totalBytes;
@@ -35,6 +36,14 @@ public class UpLoadReson {
 
     public void setConsumeMins(long consumeMins) {
         this.consumeMins = consumeMins;
+    }
+
+    public int getUpdate_records() {
+        return update_records;
+    }
+
+    public void setUpdate_records(int update_records) {
+        this.update_records = update_records;
     }
 
     /**

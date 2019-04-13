@@ -40,7 +40,12 @@ public class Boot {
     private static boolean is_server = false;
     private static boolean allow_upload_img = true;
     private static String ip_blacklist = "";
+    private static String inner_ip_pattern="";
     private static ClientBoot clientBoot;
+    private static String role = null;
+    private static String MASTER = "master";
+    private static String SLAVE = "slave";
+
     private static ExecutorService executorService = new ThreadPoolExecutor(1,1,0, TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(1));
     //private static ExecutorService thriftExecutorService = new ThreadPoolExecutor(1,1,0, TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(1));
 
@@ -51,12 +56,75 @@ public class Boot {
     public static void main(String[] args) throws Exception{
         try {
             Properties properties = read_sys_cfg();
-            init(properties);
-            read_opt_from_terminal(properties);
+            initAndStart(properties);
         }catch (Exception ex){
             System.err.println(ExceptionInfoUtils.getExceptionCauseInfo(ex));
             Runtime.getRuntime().halt(-1);
         }
+    }
+    private static void initAndStart(Properties properties){
+        init(properties);
+        String role = properties.getProperty("role");
+        if(StringUtils.isNotBlank(role)){
+            role = role.trim();
+            if("master".equals(role)||"slave".equals(role)){
+                autoStartFromCfg(properties,role);
+            }else{
+                System.err.println("sys.properties配置文件中role参数值不正确，请使用master或者slave");
+            }
+        }else{
+            read_opt_from_terminal(properties);
+        }
+    }
+    private static void autoStartFromCfg(Properties properties,String role){
+        String appName = "[Server]";
+        boolean started = false;
+        if(MASTER.equals(role)){
+            appName = "[Client]";
+            is_server = false;
+            String up_stream_ip = properties.getProperty("upstrem.ip");
+            String up_stream_port = properties.getProperty("upstrem.port");
+            if(validUpStreamIp(up_stream_ip)&&validPortParam(up_stream_port)){
+                startClient(up_stream_ip.trim(),Integer.parseInt(up_stream_port.trim()));
+                started = true;
+            }
+        }else if(SLAVE.equals(role)){
+            is_server = true;
+            String up_stream_port = properties.getProperty("upstrem.port");
+            if(validPortParam(up_stream_port)){
+                startSer(Integer.parseInt(up_stream_port.trim()));
+                started = true;
+            }
+        }
+
+        if(started){
+            ctrl_life_from_terminal(appName);
+        }
+    }
+
+    private static boolean validUpStreamIp(String up_stream_ip){
+        boolean valid = true;
+        if(StringUtils.isBlank(up_stream_ip)){
+            System.err.println("sys.properties配置文件中参数upstrem.ip值不能为空");
+            valid = false;
+        }
+        if(!orIp(up_stream_ip)){
+            valid =false;
+            System.err.println("sys.properties配置文件中参数upstrem.ip值["+up_stream_ip+"]不是合法ip地址");
+        }
+        return valid;
+    }
+    private static boolean validPortParam(String up_stream_port){
+        boolean valid = true;
+        if(StringUtils.isBlank(up_stream_port)){
+            System.err.println("sys.properties配置文件中参数upstrem.port值不能为空");
+            valid = false;
+        }
+        if(!isNumeric(up_stream_port)){
+            System.err.println("sys.properties配置文件中参数upstrem.port值["+up_stream_port+"]不是正整数");
+            valid = false;
+        }
+        return valid;
     }
 
     /**
@@ -93,12 +161,44 @@ public class Boot {
             }
             param = prop.getProperty("ip_balck_list");
             if(StringUtils.isNotBlank(param)){
-                ip_blacklist = param;
+                ip_blacklist = param.trim();
             }
             if(!allow_upload_img){
                 ip_blacklist = "*";
             }
+
+            param = prop.getProperty("inner_ip_pattern");
+            if(StringUtils.isNotBlank(param)){
+                inner_ip_pattern = param.trim();
+            }
+            role = prop.getProperty("role");
+
         });
+    }
+
+    private static void ctrl_life_from_terminal(String appName){
+        Scanner scanner = null;
+        try {
+            scanner = new Scanner(System.in);
+            System.err.println(appName + " Starting ...... \r\n输入exit(e)/quit(q)/close(c)退出程序 ");
+            List<String> exit_cmds = Arrays.asList("e","c","q","quit","close","exit");
+            while (scanner.hasNextLine()) {
+                String cmd = scanner.nextLine();
+                if(exit_cmds.contains(cmd)){
+                    break;
+                }
+                System.err.println("输入exit(e)/quit(q)/close(c)退出程序 ");
+            }
+            System.err.println("系统即将退出，启动释放资源的操作..");
+            relese_resource();
+            System.err.println("资源释放完毕，退出系统 bye !");
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }finally {
+            if(scanner!=null){
+                scanner.close();
+            }
+        }
     }
 
     /**
@@ -136,7 +236,7 @@ public class Boot {
                     //启动客户端程序
                     executorService.execute(()->{
                         clientBoot = new ClientBoot();
-                        clientBoot.start_client_jobs(properties.getProperty("upstrem.ip"),Integer.parseInt(properties.getProperty("upstrem.port").trim()),ip_blacklist);
+                        clientBoot.start_client_jobs(properties.getProperty("upstrem.ip"),Integer.parseInt(properties.getProperty("upstrem.port").trim()),ip_blacklist,inner_ip_pattern);
                     });
                     break;
                 }else if(str.trim().startsWith("ser")){
@@ -173,6 +273,26 @@ public class Boot {
                 scanner.close();
             }
         }
+    }
+
+    private static void startClient(String up_stream_ip,int up_stream_port){
+        //启动客户端程序
+        executorService.execute(()->{
+            clientBoot = new ClientBoot();
+            System.err.println("启动客户端程序[ip="+up_stream_ip+"],[port="+up_stream_port+"]");
+            clientBoot.start_client_jobs(up_stream_ip,up_stream_port,ip_blacklist,inner_ip_pattern);
+        });
+
+    }
+    private static void startSer(int port){
+        //启动服务端程序
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                System.err.println("启动服务端程序[port="+port+"]");
+                ServerBoot.start_server(port);
+            }
+        });
     }
 
     /**
