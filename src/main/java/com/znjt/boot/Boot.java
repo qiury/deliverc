@@ -35,7 +35,7 @@ public class Boot {
     //数据帧准许的最大值
     public static int FRAME_MAX_SIXE = 40*1024*1024;
     //每次开始上传图像任务时，前面几次采用Stream方式上传数据
-    public static int PRE_UPLOAD_IMAGE_BY_SYNC_SINGLE_TIMES = 2;
+    public static int PRE_UPLOAD_IMAGE_BY_SYNC_SINGLE_TIMES = 4;
     private static final int try_use_days = 45;
     private static boolean is_server = false;
     private static boolean allow_upload_img = true;

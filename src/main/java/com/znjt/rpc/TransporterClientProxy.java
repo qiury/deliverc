@@ -45,7 +45,7 @@ public class TransporterClientProxy {
     private TransferRespJobUtils transferRespJobUtils;
     private Object monitor = new Object();
     private GPSTransferService gpsTransferService;
-    private static int DEADLINE = 30;
+    private static int DEADLINE = 60;
 
     private long total_img_bytes_size = 0;
     private long total_img_count = 0;
@@ -318,7 +318,7 @@ public class TransporterClientProxy {
      *
      * @param datas
      */
-    public void transferData2ServerBySync(List<GPSTransferIniBean> datas) {
+    public void  transferData2ServerBySync(List<GPSTransferIniBean> datas) {
         if (datas != null && datas.size() > 0) {
             for (GPSTransferIniBean item : datas) {
                 SyncDataRequest request = createRequestObj(item);

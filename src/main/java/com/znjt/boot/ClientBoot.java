@@ -46,7 +46,7 @@ public class ClientBoot {
     private TransportClient client;
     private static  boolean RATE_LIMITING = true;
     private static final int INC_STEP = 5;
-    private static final long TIME_WATER_LINE = 1500;
+    private static final long TIME_WATER_LINE = 10000;
 
     /**
      * 启动客户端任务
@@ -244,7 +244,7 @@ public class ClientBoot {
 //                    }
 //                }
                 if(upLoadReson.getUpdate_records()==0){
-                    LoggerUtils.warn(logger,"批量同步图像到服务器，由于服务器后台数据验证原因没有入库，终止此次图像同步任务...[等待下次同步单条数据，进行尝试数据修复]");
+                    LoggerUtils.warn(logger,"批量同步图像到服务器，由于服务器后台数据验证原因没有入库，终止此次图像同步任务...[等待下次同步单条数据，进行数据修复]");
                     has_err = true;
                     break;
                 }
@@ -266,11 +266,11 @@ public class ClientBoot {
                         if(consumerMils>TIME_WATER_LINE){
                             sb.append("上传耗时["+consumerMils+"]ms,大于["+TIME_WATER_LINE+"]ms.");
                         }
-                        LoggerUtils.info(logger,sb.toString() + " 尝试减少单次批量记录为原来的一半");
+                        LoggerUtils.info(logger,sb.toString() + " 减少单次批量记录为原来的一半");
                     }else{
                         //尝试递增
                         dync_batch_size = dync_batch_size+=INC_STEP;
-                        LoggerUtils.info(logger,"网络带宽良好,耗时小余"+TIME_WATER_LINE+"ms，尝试增加单次批量记录["+INC_STEP+"]");
+                        LoggerUtils.info(logger,"网络带宽良好,耗时小余"+TIME_WATER_LINE+"ms，增加单次批量记录["+INC_STEP+"]");
                     }
                     //现在批量最小值
                     if(dync_batch_size<2){
