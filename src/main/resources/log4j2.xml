@@ -273,7 +273,7 @@
             <AppenderRef ref="DataSource_RollingFile" />
         </Logger>
 
-        <Logger name="com.znjt.dao" level="info" additivity="false">
+        <Logger name="com.znjt.dao" level="debug" additivity="false">
             <AppenderRef ref="Sql_RollingFile" />
             <AppenderRef ref="Console" />
         </Logger>

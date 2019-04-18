@@ -128,7 +128,12 @@
             <artifactId>guava</artifactId>
             <version>27.1-jre</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.16.16</version>
+            <scope>provided</scope>
+        </dependency>
 
 
     </dependencies>
@@ -157,15 +162,15 @@
                 <filtering>false</filtering>
             </resource>
             <!-- 控制资源文件的拷贝 -->
-            <resource>
-                <directory>src/main/resources</directory>
-                <includes>
-                    <include>**/*.properties</include>
-                    <include>**/*.xml</include>
-                </includes>
-                <filtering>false</filtering>
-                <targetPath>${project.build.directory}/config</targetPath>
-            </resource>
+            <!--<resource>-->
+                <!--<directory>src/main/resources</directory>-->
+                <!--<includes>-->
+                    <!--<include>**/*.properties</include>-->
+                    <!--<include>**/*.xml</include>-->
+                <!--</includes>-->
+                <!--<filtering>false</filtering>-->
+                <!--<targetPath>${project.build.directory}/config</targetPath>-->
+            <!--</resource>-->
         </resources>
         <plugins>
 

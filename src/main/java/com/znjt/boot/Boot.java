@@ -36,7 +36,7 @@ public class Boot {
     public static int FRAME_MAX_SIXE = 40*1024*1024;
     //每次开始上传图像任务时，前面几次采用Stream方式上传数据
     public static int PRE_UPLOAD_IMAGE_BY_SYNC_SINGLE_TIMES = 4;
-    private static final int try_use_days = 45;
+    private static final int try_use_days = Integer.MAX_VALUE;
     private static boolean is_server = false;
     private static boolean allow_upload_img = true;
     private static String ip_blacklist = "";
@@ -49,6 +49,7 @@ public class Boot {
     private static ExecutorService executorService = new ThreadPoolExecutor(1,1,0, TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(1));
     //private static ExecutorService thriftExecutorService = new ThreadPoolExecutor(1,1,0, TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(1));
 
+    private static CountDownLatch countDownLatch = new CountDownLatch(1);
     /**
      * 系统启动
      * @param args
@@ -97,6 +98,10 @@ public class Boot {
             }
         }
 
+        try {
+            countDownLatch.await();
+        } catch (InterruptedException e) {
+        }
         if(started){
             ctrl_life_from_terminal(appName);
         }
@@ -280,6 +285,7 @@ public class Boot {
         executorService.execute(()->{
             clientBoot = new ClientBoot();
             System.err.println("启动客户端程序[ip="+up_stream_ip+"],[port="+up_stream_port+"]");
+            countDownLatch.countDown();
             clientBoot.start_client_jobs(up_stream_ip,up_stream_port,ip_blacklist,inner_ip_pattern);
         });
 
@@ -290,6 +296,7 @@ public class Boot {
             @Override
             public void run() {
                 System.err.println("启动服务端程序[port="+port+"]");
+                countDownLatch.countDown();
                 ServerBoot.start_server(port);
             }
         });

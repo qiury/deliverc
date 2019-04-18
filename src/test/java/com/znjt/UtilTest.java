@@ -21,4 +21,13 @@ public class UtilTest {
     public void test03() throws Exception{
         //Thumbnails.of("/Users/qiuzx/IdeaProjects/qiuzx/deliverc/imgs/ai.png").scale(1f).outputQuality(0.25f).toFile("/Users/qiuzx/IdeaProjects/qiuzx/deliverc/imgs/ai01.png");
     }
+
+    @Test
+    public void test04(){
+        int i = 1;
+        i = i++;
+        int k = i+++i*i++;
+        System.err.println(k);
+        System.err.println(i);
+    }
 }

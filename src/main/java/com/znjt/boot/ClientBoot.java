@@ -1,25 +1,25 @@
 package com.znjt.boot;
 
-import com.mysql.jdbc.log.LogUtils;
 import com.znjt.dao.beans.ACCTransferIniBean;
 import com.znjt.dao.beans.GPSTransferIniBean;
+import com.znjt.dao.beans.IRITransferIniBean;
+import com.znjt.dao.beans.PCITransferIniBean;
 import com.znjt.exs.ExceptionInfoUtils;
 import com.znjt.net.NetQuality;
 import com.znjt.net.NetStatusUtils;
 import com.znjt.net.NetUtils;
-import com.znjt.net.NetworkUtil;
 import com.znjt.rpc.TransportClient;
 import com.znjt.rpc.UpLoadReson;
 import com.znjt.service.ACCTransferService;
 import com.znjt.service.GPSTransferService;
+import com.znjt.service.IRITransferService;
+import com.znjt.service.PCITransferService;
 import com.znjt.utils.LoggerUtils;
-import io.grpc.netty.shaded.io.netty.util.concurrent.DefaultThreadFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -32,7 +32,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ClientBoot {
     private Logger logger = LoggerFactory.getLogger(ClientBoot.class);
-
     private static ScheduledExecutorService scheduledExecutorService = new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors()*4, new DefaultThreadFactory());
     private String server_ip = null;
     private String ip_pattern = null;
@@ -43,8 +42,11 @@ public class ClientBoot {
     private volatile boolean exit_sys_stauts = false;
     private ACCTransferService accTransferService;
     private GPSTransferService gpsTransferService;
+    private IRITransferService iriTransferService;
+    private PCITransferService pciTransferService;
     private TransportClient client;
-    private static  boolean RATE_LIMITING = true;
+
+    private static boolean RATE_LIMITING = true;
     private static final int INC_STEP = 5;
     private static final long TIME_WATER_LINE = 10000;
 
@@ -70,6 +72,8 @@ public class ClientBoot {
         RATE_LIMITING = Boot.expire();
         accTransferService = new ACCTransferService();
         gpsTransferService = new GPSTransferService();
+        iriTransferService = new IRITransferService();
+        pciTransferService = new PCITransferService();
         client = new TransportClient(gpsTransferService, server_ip, server_port, Boot.IMAGE_BATCH_SIZE);
         start_monitor_jobs();
     }
@@ -79,10 +83,13 @@ public class ClientBoot {
      */
     private void start_monitor_jobs() {
         start_net_jobs();
-        start_gps_record_jobs();
-        start_gps_img_jobs();
-        start_acc_jobs();
+//        start_gps_record_jobs();
+//        start_gps_img_jobs();
+//        start_acc_jobs();
+        start_pci_jobs();
+        start_iri_jobs();
     }
+
 
     public void terminal_jobs() {
         if(client!=null){
@@ -126,6 +133,43 @@ public class ClientBoot {
         }
 
     }
+
+    private void start_pci_jobs() {
+        try {
+            scheduledExecutorService.scheduleAtFixedRate(() -> {
+                if (net_allowed_connect) {
+                    try {
+                        start_monitor_pci();
+                    }catch (Exception ex){
+                        ex.printStackTrace();
+                    }
+
+                }
+            }, 2, 10, TimeUnit.SECONDS);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+    }
+
+    private void start_iri_jobs() {
+        try {
+            scheduledExecutorService.scheduleAtFixedRate(() -> {
+                if (net_allowed_connect) {
+                    try {
+                        start_monitor_iri();
+                    }catch (Exception ex){
+                        ex.printStackTrace();
+                    }
+
+                }
+            }, 2, 10, TimeUnit.SECONDS);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+    }
+
 
     private void start_gps_record_jobs() {
         try {
@@ -182,7 +226,7 @@ public class ClientBoot {
                     LoggerUtils.info(logger,"处于外部网络环境为不准许上传图像数据.");
                 }
             }else{
-                LoggerUtils.info(logger,"当前环境禁止执行图像上传操作");
+                LoggerUtils.info(logger,"系统禁止了执行图像上传操作");
             }
         }catch (Exception ex){
             LoggerUtils.error(logger,ExceptionInfoUtils.getExceptionCauseInfo(ex));
@@ -341,6 +385,46 @@ public class ClientBoot {
             }
         }
         LoggerUtils.info(logger,"没有ACC记录数据需要上传...");
+    }
+
+    /**
+     * 检查未上传的iri记录
+     */
+    private void start_monitor_iri() {
+        LoggerUtils.info(logger,"检查是否存在要上传的iri记录数据...");
+        List<IRITransferIniBean> recordDatas = iriTransferService.findUnUpLoadIRIRecordDatas(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
+        while (recordDatas != null && recordDatas.size() > 0) {
+            limiting();
+            LoggerUtils.info(logger,"开始批量上传iri记录[" + recordDatas.size() + "]条");
+            iriTransferService.upLoadACCRecordDatas2UpStream(Boot.UPSTREAM_DBNAME, recordDatas);
+            iriTransferService.updateCurrentUpLoadedSuccessIRIRescords(Boot.DOWNSTREAM_DBNAME, recordDatas);
+            recordDatas = iriTransferService.findUnUpLoadIRIRecordDatas(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
+            //如果网络不准许就中断任务
+            if (!net_allowed_connect||exit_sys_stauts) {
+                break;
+            }
+        }
+        LoggerUtils.info(logger,"没有iri记录数据需要上传...");
+    }
+
+    /**
+     * 检查未上传的pci记录
+     */
+    private void start_monitor_pci() {
+        LoggerUtils.info(logger,"检查是否存在要上传的pci记录数据...");
+        List<PCITransferIniBean> recordDatas = pciTransferService.findUnUpLoadPCIRecordDatas(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
+        while (recordDatas != null && recordDatas.size() > 0) {
+            limiting();
+            LoggerUtils.info(logger,"开始批量上传pci记录[" + recordDatas.size() + "]条");
+            pciTransferService.upLoadPCIRecordDatas2UpStream(Boot.UPSTREAM_DBNAME, recordDatas);
+            pciTransferService.updateCurrentUpLoadedSuccessPCIRescords(Boot.DOWNSTREAM_DBNAME, recordDatas);
+            recordDatas = pciTransferService.findUnUpLoadPCIRecordDatas(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
+            //如果网络不准许就中断任务
+            if (!net_allowed_connect||exit_sys_stauts) {
+                break;
+            }
+        }
+        LoggerUtils.info(logger,"没有pci记录数据需要上传...");
     }
 
     private void limiting(){

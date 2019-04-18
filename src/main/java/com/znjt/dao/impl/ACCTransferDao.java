@@ -1,12 +1,9 @@
 package com.znjt.dao.impl;
 
 import com.znjt.dao.beans.ACCTransferIniBean;
-import com.znjt.dao.beans.GPSTransferIniBean;
 import com.znjt.dao.mapper.ACCTransferBeanMapper;
-import com.znjt.dao.mapper.GPSTransferBeanMapper;
 import com.znjt.datasource.enhance.EnhanceDbUtils;
 import com.znjt.datasource.enhance.EnhanceMapperFactory;
-import com.znjt.exs.DBException;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 
@@ -53,7 +50,7 @@ public class ACCTransferDao {
             mapper.upLoadACCRecordDatas2UpStream(accTransferIniBeans);
             sqlSession.commit();
         } catch (Exception e) {
-            new RuntimeException("更新已经上传的ACC图像状态出现异常",e);
+            new RuntimeException("更新已经上传的ACC状态出现异常",e);
         } finally {
             EnhanceDbUtils.closeSession();
         }

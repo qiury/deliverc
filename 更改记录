@@ -138,3 +138,16 @@ alter table gps add column total_losted_size tinyint not null default 0 comment 
 
 13. 注意：在gps表中，把original_url的默认值设置为null，而不是"NULL";
 
+14. 修改iri和pci表中uploadstatus数据类型
+alter table iri/pci modify column uploadstatus tinyint not null default 0 comment '记录是否已经上传'
+15. 在iri和pci表中增加ctime字段，记录当前数据的插入时间
+alter table iri/pci add COLUMN ctime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP comment '入库时间'
+
+16.在iri/pci表中增加dataid列，用于表示当前记录的身份（在分布式环境数据的id是可能会重复的）
+alter table iri/pci add COLUMN dataid varchar(70) unique comment '数据记录身份'
+
+17.在iri表的服务器端创建iriid唯一索引，accid的值=客户端的(id_status_accid)
+alter table iri add unique index iri_4_distributed_system (accid)
+18.iri/pci表添加自增主键
+alter table iri/pci add id bigint not null primary key Auto_increment
+
