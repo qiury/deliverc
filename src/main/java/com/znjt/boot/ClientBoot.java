@@ -90,7 +90,6 @@ public class ClientBoot {
         start_gps_record_jobs();
         start_gps_img_jobs();
         start_acc_jobs();
-
         start_pci_jobs();
         start_iri_jobs();
     }

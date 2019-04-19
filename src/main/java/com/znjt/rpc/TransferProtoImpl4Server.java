@@ -15,6 +15,7 @@ import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -32,7 +33,7 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
     public static final String BASE_DIR = CommonFileUitls.getProjectPath();
     private GPSTransferService gpsTransferService = new GPSTransferService();
     static {
-        FileIOUtils.init_fs_dirs(BASE_DIR,"/fs/");
+        FileIOUtils.init_fs_dirs(BASE_DIR,File.separator+"fs"+File.separator);
     }
 
     /**

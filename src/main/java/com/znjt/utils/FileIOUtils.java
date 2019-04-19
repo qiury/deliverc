@@ -6,7 +6,6 @@ import org.apache.commons.io.IOUtils;
 import java.io.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by qiuzx on 2019-03-15
@@ -68,12 +67,17 @@ public class FileIOUtils {
      * @return
      */
     public static String createRelativePath4Image(String imageName){
-        StringBuilder sb = new StringBuilder("/fs/");
+        StringBuilder sb = new StringBuilder(File.separator+"fs"+File.separator);
         sb.append(getRandomFlag());
-        sb.append("/");
+        sb.append(File.separator);
         sb.append(getRandomFlag());
-        sb.append("/").append(imageName).append(getLoopNumFlag()).append(".jpg");
+        sb.append(File.separator).append(imageName).append(getLoopNumFlag()).append(".jpg");
         return sb.toString();
+    }
+
+    public static void main(String[] args) {
+        System.err.println(createRelativePath4Image("01"));
+        System.err.println(CommonFileUitls.getProjectPath());
     }
 
     /**

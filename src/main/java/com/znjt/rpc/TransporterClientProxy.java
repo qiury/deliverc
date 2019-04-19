@@ -7,23 +7,19 @@ import com.znjt.proto.*;
 import com.znjt.service.GPSTransferService;
 import com.znjt.utils.FileIOUtils;
 import com.znjt.utils.LoggerUtils;
-import io.grpc.Deadline;
 import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import io.grpc.netty.shaded.io.grpc.netty.NegotiationType;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
-import io.grpc.netty.shaded.io.netty.channel.ChannelOption;
 import io.grpc.stub.StreamObserver;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -479,6 +475,8 @@ public class TransporterClientProxy {
                 Optional.ofNullable(path).ifPresent(item->{
                     if(StringUtils.isNotBlank(base_dir)){
                         item = base_dir+item;
+                    }else {
+                        LoggerUtils.debug(logger,"相对路径=["+item+"]的记录，根目录值为空，");
                     }
                     total_img_count++;
                     byte[] img = getEachImgData(data_id,item.trim());
@@ -503,11 +501,7 @@ public class TransporterClientProxy {
         try {
             bytes = FileIOUtils.getImgBytesDataFromPath(path);
         } catch (Exception ex) {
-            if (!(ex.getCause() instanceof FileNotFoundException)) {
-                if (logger.isWarnEnabled()) {
-                    logger.warn(data_id + " 失败. 原因：" + ExceptionInfoUtils.getExceptionCauseInfo(ex));
-                }
-            }
+            LoggerUtils.warn(logger,"读取[" +path+ "] 失败. 原因：" + ExceptionInfoUtils.getExceptionCauseInfo(ex));
         }
         return bytes;
     }
