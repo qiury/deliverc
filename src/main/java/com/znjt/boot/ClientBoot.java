@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,7 +49,9 @@ public class ClientBoot {
 
     private static boolean RATE_LIMITING = true;
     private static final int INC_STEP = 5;
+    //每条上传指令等待最大时长，在这个时间范围内的认为是合理的，否则需要减速
     private static final long TIME_WATER_LINE = 10000;
+    private String[] ext_tables = null;
 
     /**
      * 启动客户端任务
@@ -56,10 +59,11 @@ public class ClientBoot {
      * @param server_ip
      * @param server_port
      */
-    public void start_client_jobs(String server_ip, int server_port,String ip_pattern,String inner_ip_pattern) {
+    public void start_client_jobs(String server_ip, int server_port,String ip_pattern,String inner_ip_pattern,String[] ext_tables) {
         this.server_ip = server_ip;
         this.server_port = server_port;
         this.ip_pattern = ip_pattern;
+        this.ext_tables = ext_tables;
         this.inner_ip_pattern = inner_ip_pattern;
         if (server_ip == null || server_ip.equals("")) {
             throw new RuntimeException("IP地址[" + server_ip + "]不合法，无法启动客户端");
@@ -83,9 +87,10 @@ public class ClientBoot {
      */
     private void start_monitor_jobs() {
         start_net_jobs();
-//        start_gps_record_jobs();
-//        start_gps_img_jobs();
-//        start_acc_jobs();
+        start_gps_record_jobs();
+        start_gps_img_jobs();
+        start_acc_jobs();
+
         start_pci_jobs();
         start_iri_jobs();
     }
@@ -135,6 +140,9 @@ public class ClientBoot {
     }
 
     private void start_pci_jobs() {
+        if(ext_tables==null||!Arrays.asList(ext_tables).contains("pci")){
+            return;
+        }
         try {
             scheduledExecutorService.scheduleAtFixedRate(() -> {
                 if (net_allowed_connect) {
@@ -153,6 +161,9 @@ public class ClientBoot {
     }
 
     private void start_iri_jobs() {
+        if(ext_tables==null||!Arrays.asList(ext_tables).contains("iri")){
+            return;
+        }
         try {
             scheduledExecutorService.scheduleAtFixedRate(() -> {
                 if (net_allowed_connect) {

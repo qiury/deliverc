@@ -45,6 +45,7 @@ public class Boot {
     private static String role = null;
     private static String MASTER = "master";
     private static String SLAVE = "slave";
+    private static String[] EXTEND_TABLES = null;
 
     private static ExecutorService executorService = new ThreadPoolExecutor(1,1,0, TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(1));
     //private static ExecutorService thriftExecutorService = new ThreadPoolExecutor(1,1,0, TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(1));
@@ -178,6 +179,10 @@ public class Boot {
             }
             role = prop.getProperty("role");
 
+            param = prop.getProperty("extend_tables");
+            if(StringUtils.isNotBlank(param)){
+                EXTEND_TABLES = param.trim().split(",");
+            }
         });
     }
 
@@ -241,7 +246,7 @@ public class Boot {
                     //启动客户端程序
                     executorService.execute(()->{
                         clientBoot = new ClientBoot();
-                        clientBoot.start_client_jobs(properties.getProperty("upstrem.ip"),Integer.parseInt(properties.getProperty("upstrem.port").trim()),ip_blacklist,inner_ip_pattern);
+                        clientBoot.start_client_jobs(properties.getProperty("upstrem.ip"),Integer.parseInt(properties.getProperty("upstrem.port").trim()),ip_blacklist,inner_ip_pattern,EXTEND_TABLES);
                     });
                     break;
                 }else if(str.trim().startsWith("ser")){
@@ -286,7 +291,7 @@ public class Boot {
             clientBoot = new ClientBoot();
             System.err.println("启动客户端程序[ip="+up_stream_ip+"],[port="+up_stream_port+"]");
             countDownLatch.countDown();
-            clientBoot.start_client_jobs(up_stream_ip,up_stream_port,ip_blacklist,inner_ip_pattern);
+            clientBoot.start_client_jobs(up_stream_ip,up_stream_port,ip_blacklist,inner_ip_pattern,EXTEND_TABLES);
         });
 
     }
