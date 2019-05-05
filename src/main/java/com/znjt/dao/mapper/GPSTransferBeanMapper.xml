@@ -83,9 +83,11 @@
     session.clearCache()方法清空的是当前session的一级缓存，对二级缓存没有影响。
     新版本的mybatis中的全局属性localCacheScope可以设置缓存的作用范围，默认是Session的，就是当前会话范围。当设置为Statement时
     表示范围是语句范围，语句执行结束就情况缓存（类似select标签中的flushCache=true），这样即可以起到禁用一级缓存。
+
+    select GPSID,STATUS,dataid, original_Url as originalUrl,basedir as baseDir from gps where  ORIGINAL_URL is not null and trim(ORIGINAL_URL) <![CDATA[<>]] ''  and trim(ORIGINAL_URL) <![CDATA[<>]] 'no image'  and  UPLOADSTATUS = 1 and img_uploaded = false   limit 0,#{pageSize}
     -->
     <select id="findUnUpLoadGPSImgDatas" resultType="GPSTransferIniBean" useCache="false" flushCache="false">
-         select GPSID,STATUS,dataid, original_Url as originalUrl,basedir as baseDir from gps where trim(ORIGINAL_URL)!='no image' and ORIGINAL_URL is not null and  UPLOADSTATUS = 1 and img_uploaded = false   limit 0,#{pageSize}
+         select GPSID,STATUS,dataid, original_Url as originalUrl,basedir as baseDir from gps where  ORIGINAL_URL is not null and trim(ORIGINAL_URL) != ''  and trim(ORIGINAL_URL) != 'no image'  and  UPLOADSTATUS = 1 and img_uploaded = false   limit 0,#{pageSize}
     </select>
 
     <!--

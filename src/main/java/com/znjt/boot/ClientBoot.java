@@ -439,13 +439,11 @@ public class ClientBoot {
 
     private void limiting(){
         if(RATE_LIMITING){
-            if(logger.isWarnEnabled()){
-                logger.warn("限速中.....");
-            }
+            LoggerUtils.warn(logger,"限速中.....");
             try {
                 Thread.sleep(ThreadLocalRandom.current().nextInt(5000,10000));
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                //e.printStackTrace();
             }
         }
     }

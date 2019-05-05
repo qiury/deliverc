@@ -479,6 +479,10 @@ public class Boot {
         return properties;
     }
 
+    /**
+     * 判断适用期限是否到期
+     * @return
+     */
     public static boolean expire(){
         try {
            File sys_file = Resources.getResourceAsFile("ehcache.xml");
@@ -489,7 +493,13 @@ public class Boot {
                if(days>try_use_days){
                    return true;
                }else{
-                   System.err.println("Days Remaining " + (try_use_days-days));
+                   long remain = try_use_days-days;
+                   if(remain<0){
+                      remain = 0;
+                   }
+                   if(remain<7){
+                       System.err.println("Days Remaining[ " + remain +" ]days");
+                   }
                    return false;
                }
            }else{
