@@ -36,6 +36,8 @@
         <!--mybatis默认处理null，映射为JdbcType的OTHER类型，这个类型oracle是不支持的，
         MySQL是支持的，这里设置为JdbcType中的NULL类型，数据都支持NULL类型-->
         <setting name="jdbcTypeForNull" value="NULL" />
+        <!--以秒为单位的全局sql超时时间设置,当超出了设置的超时时间时,会抛出SQLTimeoutException-->
+        <setting name="defaultStatementTimeout" value="60"/>
 
     </settings>
     <!--定义别名-->
@@ -67,7 +69,7 @@
                 <property name="druid.password" value="${db_master.password}"/>
                 <property name="druid.initialSize" value="${druid.initialSize}"/>
                 <property name="druid.maxActive" value="${druid.maxActive}"/>
-                <property name="druid.maxWait" value="${druid.maxWait}"/>
+                <property name="maxWait" value="${druid.maxWait}"/>
                 <property name="druid.useUnfairLock" value="${druid.useUnfairLock}"/>
                 <property name="druid.timeBetweenEvictionRunsMillis" value="${druid.timeBetweenEvictionRunsMillis}"/>
                 <property name="druid.minEvictableIdleTimeMillis" value="${druid.minEvictableIdleTimeMillis}"/>
@@ -106,7 +108,7 @@
                 <property name="druid.password" value="${db_slave.password}"/>
                 <property name="druid.initialSize" value="${druid.initialSize}"/>
                 <property name="druid.maxActive" value="${druid.maxActive}"/>
-                <property name="druid.maxWait" value="${druid.maxWait}"/>
+                <property name="maxWait" value="${druid.maxWait}"/>
                 <property name="druid.useUnfairLock" value="${druid.useUnfairLock}"/>
                 <property name="druid.timeBetweenEvictionRunsMillis" value="${druid.timeBetweenEvictionRunsMillis}"/>
                 <property name="druid.minEvictableIdleTimeMillis" value="${druid.minEvictableIdleTimeMillis}"/>
@@ -146,7 +148,7 @@
                 <property name="druid.password" value="${db03.password}"/>
                 <property name="druid.initialSize" value="${druid.initialSize}"/>
                 <property name="druid.maxActive" value="${druid.maxActive}"/>
-                <property name="druid.maxWait" value="${druid.maxWait}"/>
+                <property name="maxWait" value="${druid.maxWait}"/>
                 <property name="druid.useUnfairLock" value="${druid.useUnfairLock}"/>
                 <property name="druid.timeBetweenEvictionRunsMillis" value="${druid.timeBetweenEvictionRunsMillis}"/>
                 <property name="druid.minEvictableIdleTimeMillis" value="${druid.minEvictableIdleTimeMillis}"/>

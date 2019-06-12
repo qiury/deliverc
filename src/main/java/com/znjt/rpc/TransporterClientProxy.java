@@ -11,6 +11,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.StatusRuntimeException;
 import io.grpc.netty.shaded.io.grpc.netty.NegotiationType;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
+import io.grpc.netty.shaded.io.netty.channel.ChannelOption;
 import io.grpc.stub.StreamObserver;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -46,6 +47,7 @@ public class TransporterClientProxy {
     private long total_img_bytes_size = 0;
     private long total_img_count = 0;
     private final long unit = 1024*1024;
+    private final int BUFSIZE = 512*1024;
 
     TransporterClientProxy(GPSTransferService localTransferService, String addr, int port, int max_batch_size) {
         this.addr = addr;
@@ -70,6 +72,8 @@ public class TransporterClientProxy {
                             .negotiationType(NegotiationType.PLAINTEXT)
                             .keepAliveTime(1, TimeUnit.MINUTES)
                             .keepAliveTimeout(5, TimeUnit.SECONDS)
+                            .withOption(ChannelOption.SO_SNDBUF,BUFSIZE)
+                            .withOption(ChannelOption.SO_RCVBUF,BUFSIZE)
                             //.maxRetryAttempts()
                             //.usePlaintext() 过期，建议使用negotiationType
                             .keepAliveWithoutCalls(true)
@@ -166,33 +170,38 @@ public class TransporterClientProxy {
             SyncMulImgRequest syncMulImgRequest = wrapper.getSyncMulImgRequest();
             TransferServiceGrpc.TransferServiceBlockingStub syncStub = getSyncStub();
             SyncMulImgResponse syncMulImgResponse = null;
-            try {
-                if(logger.isWarnEnabled()) {
-                    logger.warn("开始上传[" + datas.size() + "]含图像的记录给服务器");
-                }
-                Instant beg = Instant.now();
-                syncMulImgResponse = syncStub.transporterMulBySync(syncMulImgRequest);
-                long cons = Duration.between(beg,Instant.now()).toMillis();
 
-                upLoadReson.setConsumeMins(cons);
-                upLoadReson.setTotalBytes(wrapper.getTotal_bys());
-                if(logger.isWarnEnabled()) {
-                    logger.warn("服务器响应[" + datas.size() + "]含图像的记录处理完成，耗时["+cons+"] ms.");
-                }
-            } catch (StatusRuntimeException ex) {
-                boolean print = true;
-                String em = ex.getMessage();
-                if (StringUtils.isNotBlank(em) && em.contains("UNAVAILABLE: io exception")) {
+            //同步保障只有一个线程在批量传输，放置网络阻塞
+            synchronized (TransporterClientProxy.class){
+                try {
                     if(logger.isWarnEnabled()) {
-                        logger.warn("Server 服务不可用，请检查Server服务是否开启");
+                        logger.warn("开始上传[" + datas.size() + "]含图像的记录给服务器");
                     }
-                    print = false;
+                    Instant beg = Instant.now();
+                    syncMulImgResponse = syncStub.transporterMulBySync(syncMulImgRequest);
+                    long cons = Duration.between(beg,Instant.now()).toMillis();
+
+                    upLoadReson.setConsumeMins(cons);
+                    upLoadReson.setTotalBytes(wrapper.getTotal_bys());
+                    if(logger.isWarnEnabled()) {
+                        logger.warn("服务器响应[" + datas.size() + "]含图像的记录处理完成，耗时["+cons+"] ms.");
+                    }
+                } catch (StatusRuntimeException ex) {
+                    boolean print = true;
+                    String em = ex.getMessage();
+                    if (StringUtils.isNotBlank(em) && em.contains("UNAVAILABLE: io exception")) {
+                        if(logger.isWarnEnabled()) {
+                            logger.warn("Server 服务不可用，请检查Server服务是否开启");
+                        }
+                        print = false;
+                    }
+                    if (print) {
+                        logger.warn(ExceptionInfoUtils.getExceptionCauseInfo(ex));
+                    }
+                    throw ex;
                 }
-                if (print) {
-                    logger.warn(ExceptionInfoUtils.getExceptionCauseInfo(ex));
-                }
-                throw ex;
             }
+
             if (syncMulImgResponse.getDataType() == DataType.T_GPS) {
                 List<GPSRecord> records = syncMulImgResponse.getGpsRecordList();
                 int updates = doneSyncResponseDatas(records);
@@ -310,11 +319,27 @@ public class TransporterClientProxy {
     }
 
     /**
+     * 同步上传测试数据，测试上传速度
+     * @param path
+     */
+    public void transferData2ServerBySync(String path){
+        SyncDataRequest request = createTestRequestObj(path);
+        try {
+            Instant instant = Instant.now();
+            LoggerUtils.info(logger,"开始上传"+path+"到Savle...");
+            TransferServiceGrpc.TransferServiceBlockingStub stubs = getSyncStub();
+            SyncDataResponse response = stubs.transporterBySyncTest(request);
+            LoggerUtils.info(logger,"上传一条记录到Savle...结束，共计耗时："+ Duration.between(instant,Instant.now()).toMillis()+" ms");
+        } catch (StatusRuntimeException ex) {
+            throw ex;
+        }
+    }
+    /**
      * 同步方式发送上传数据的操作
      *
      * @param datas
      */
-    public void  transferData2ServerBySync(List<GPSTransferIniBean> datas) {
+    public void transferData2ServerBySync(List<GPSTransferIniBean> datas) {
         if (datas != null && datas.size() > 0) {
             for (GPSTransferIniBean item : datas) {
                 SyncDataRequest request = createRequestObj(item);
@@ -372,6 +397,10 @@ public class TransporterClientProxy {
         return wrapper;
     }
 
+    private SyncDataRequest createTestRequestObj(String path) {
+        GPSRecord gpsRecord = createGPSRecordBean(path);
+        return SyncDataRequest.newBuilder().setDataType(DataType.T_GPS_SINGLE_TEST).setGpsRecord(gpsRecord).build();
+    }
     private SyncDataRequest createRequestObj(GPSTransferIniBean item) {
         GPSRecord gpsRecord = createGPSRecordBean(item);
         return SyncDataRequest.newBuilder().setDataType(DataType.T_GPS).setGpsRecord(gpsRecord).build();
@@ -395,8 +424,12 @@ public class TransporterClientProxy {
                 base_path = "";
             }
             for (String fp : file_paths) {
+                byte[] img = null;
 
-                byte[] img = getEachImgData(data_id,base_path+fp);
+                ImageInfoBean imageInfoBean = getEachImgData(data_id,base_path+fp,false);
+                if(imageInfoBean!=null){
+                    img = imageInfoBean.getImg();
+                }
                 if(img==null){
                     gpsSingleRecord = GPSSingleRecord.newBuilder().setClientRecordId(item.getGpsid())
                             .setDataId(item.getDataid())
@@ -405,6 +438,7 @@ public class TransporterClientProxy {
                 }else{
                     gpsSingleRecord = GPSSingleRecord.newBuilder().setClientRecordId(item.getGpsid())
                             .setDataId(item.getDataid())
+                            .setFileName(imageInfoBean.getFileName())
                             .setImgData(ByteStringUtils.changeBytes2ByteString(img))
                             .build();
                 }
@@ -414,7 +448,24 @@ public class TransporterClientProxy {
 
         return gsrs;
     }
+    private GPSRecord createGPSRecordBean(String filePath) {
+        List<String> fileNames = null;
+        List<byte[]> imgs = null;
+        GPSRecord gpsRecord = null;
+        if(filePath!=null){
+            MultiImageInfoBean multiImageInfoBean = getSigleImgDatas(filePath);
+            fileNames = multiImageInfoBean.getFileNames();
+            imgs = multiImageInfoBean.getImgs();
+            gpsRecord = GPSRecord.newBuilder().setClientRecordId("1")
+                    .setDataId("1")
+                    .setLostedSize(0)
+                    .addAllFileNames(fileNames)
+                    .addAllImgData(ByteStringUtils.changeBytesIter2ByteString(imgs))
+                    .build();;
+        }
 
+        return gpsRecord;
+    }
     private GPSRecord createGPSRecordBean(GPSTransferIniBean item) {
         String data_id = getDataid(item);
         String file_path = item.getOriginalUrl();
@@ -427,8 +478,11 @@ public class TransporterClientProxy {
             file_paths = file_path.split(";");
         }
         List<byte[]> imgs = null;
+        List<String> fileNames = null;
         if(file_paths!=null){
-            imgs = getEachImgDatas(data_id,base_path,file_paths);
+           MultiImageInfoBean multiImageInfoBean = getEachImgDatas(data_id,base_path,file_paths);
+           fileNames = multiImageInfoBean.getFileNames();
+           imgs = multiImageInfoBean.getImgs();
         }
         //计算丢失文件的个数
         int losted_size = 0;
@@ -446,6 +500,7 @@ public class TransporterClientProxy {
             gpsRecord = GPSRecord.newBuilder().setClientRecordId(item.getGpsid())
                     .setDataId(item.getDataid())
                     .setLostedSize(losted_size)
+                    .addAllFileNames(fileNames)
                     .addAllImgData(ByteStringUtils.changeBytesIter2ByteString(imgs))
                     .build();
         }
@@ -459,7 +514,7 @@ public class TransporterClientProxy {
      */
     private String getDataid(GPSTransferIniBean item){
         if(item!=null){
-            return "读取_gpsid=" + item.getGpsid() + "_dataid=" + item.getDataid() + "_originalUrl=" + item.getOriginalUrl();
+            return "读取_gpsid=" + item.getGpsid() + "_dataid=" + item.getDataid();
         }
         return "unknow device info";
     }
@@ -468,8 +523,29 @@ public class TransporterClientProxy {
      * 获取跟定路径的所有文件的二进制字节数组
      * @return
      */
-    private List<byte[]> getEachImgDatas(String data_id,String base_dir,String[] paths){
+    private MultiImageInfoBean getSigleImgDatas(String filePath){
+        MultiImageInfoBean multiImageInfoBean = new MultiImageInfoBean();
         List<byte[]> imgs = new ArrayList<>();
+        List<String> fileNames = new ArrayList<>();
+        ImageInfoBean imageInfoBean = getEachImgData("",filePath,true);
+
+        Optional.ofNullable(imageInfoBean).ifPresent(iib->{
+            imgs.add(iib.getImg());
+            fileNames.add(iib.getFileName());
+            total_img_bytes_size+=iib.getImg().length;
+        });
+        multiImageInfoBean.setFileNames(fileNames);
+        multiImageInfoBean.setImgs(imgs);
+        return multiImageInfoBean;
+    }
+    /**
+     * 获取跟定路径的所有文件的二进制字节数组
+     * @return
+     */
+    private MultiImageInfoBean getEachImgDatas(String data_id,String base_dir,String[] paths){
+        MultiImageInfoBean multiImageInfoBean = new MultiImageInfoBean();
+        List<byte[]> imgs = new ArrayList<>();
+        List<String> fileNames = new ArrayList<>();
         Optional.ofNullable(paths).ifPresent(pts->{
             for(String path:pts){
                 Optional.ofNullable(path).ifPresent(item->{
@@ -479,15 +555,19 @@ public class TransporterClientProxy {
                         LoggerUtils.debug(logger,"相对路径=["+item+"]的记录，根目录值为空，");
                     }
                     total_img_count++;
-                    byte[] img = getEachImgData(data_id,item.trim());
-                    Optional.ofNullable(img).ifPresent(image->{
-                        imgs.add(image);
-                        total_img_bytes_size+=image.length;
+                    ImageInfoBean imageInfoBean = getEachImgData(data_id,item.trim(),false);
+
+                    Optional.ofNullable(imageInfoBean).ifPresent(iib->{
+                        imgs.add(iib.getImg());
+                        fileNames.add(iib.getFileName());
+                        total_img_bytes_size+=iib.getImg().length;
                     });
                 });
             }
         });
-        return imgs;
+        multiImageInfoBean.setFileNames(fileNames);
+        multiImageInfoBean.setImgs(imgs);
+        return multiImageInfoBean;
     }
 
     /**
@@ -496,14 +576,21 @@ public class TransporterClientProxy {
      * @param path
      * @return
      */
-    private byte[] getEachImgData(String data_id,String path){
+    private ImageInfoBean getEachImgData(String data_id,String path,boolean haExtension){
+        ImageInfoBean imageInfoBean = null;
         byte[] bytes = null;
+        String fileName = null;
         try {
             bytes = FileIOUtils.getImgBytesDataFromPath(path);
+            //获取到图片的情况下才解析文件名称
+            if(bytes!=null) {
+                fileName = FileIOUtils.getImageFileName(path,haExtension);
+                imageInfoBean = new ImageInfoBean(fileName,bytes);
+            }
         } catch (Exception ex) {
             LoggerUtils.warn(logger,"读取[" +path+ "] 失败. 原因：" + ExceptionInfoUtils.getExceptionCauseInfo(ex));
         }
-        return bytes;
+        return imageInfoBean;
     }
 
     /**

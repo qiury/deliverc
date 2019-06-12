@@ -2,8 +2,17 @@ package com.znjt.utils;
 
 import com.znjt.exs.FileIOException;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -15,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class FileIOUtils {
     private static final AtomicInteger LOOPER = new AtomicInteger();
     //100k
-    private static int BUFFER_SIZE = 1024*1024;
+    private static int BUFFER_SIZE = 102400;
     private FileIOUtils(){
 
     }
@@ -26,7 +35,7 @@ public class FileIOUtils {
     public static byte[] getImgBytesDataFromPath(String path){
         byte[] bytes = null;
         if(path!=null){
-            //测试路径
+            //测试路
             // path="/Users/qiuzx/IdeaProjects/qiuzx/deliverc/imgs/ai.jpg";
             try(InputStream is = new BufferedInputStream(new FileInputStream(path),BUFFER_SIZE)){
                 bytes = new byte[is.available()];
@@ -37,6 +46,8 @@ public class FileIOUtils {
         }
         return bytes;
     }
+
+
 
     /**
      * 将内存二进制数据写入disk
@@ -66,18 +77,37 @@ public class FileIOUtils {
      * 为图像创建相对路径,相对fs目录
      * @return
      */
-    public static String createRelativePath4Image(String imageName){
+    public static String createRelativePath4Image(String imageName,boolean use_org_file_name){
         StringBuilder sb = new StringBuilder(File.separator+"fs"+File.separator);
         sb.append(getRandomFlag());
         sb.append(File.separator);
         sb.append(getRandomFlag());
-        sb.append(File.separator).append(imageName).append(getLoopNumFlag()).append(".jpg");
+        sb.append(File.separator).append(imageName);
+        if(!use_org_file_name){
+            sb.append(getLoopNumFlag());
+        }
+        sb.append(".jpg");
         return sb.toString();
     }
 
+
     public static void main(String[] args) {
-        System.err.println(createRelativePath4Image("01"));
-        System.err.println(CommonFileUitls.getProjectPath());
+//        System.err.println(createRelativePath4Image("01",false));
+//        System.err.println(CommonFileUitls.getProjectPath());
+//        StringBuilder sb = new StringBuilder("d:");
+//        sb.append("\\\\").append("test").append("\\").append("zntj_sh_001").append("\\").append("ZNJT_SH_0112019051617425648.jpg");
+//        String path = sb.toString();
+//
+//        path = path.replaceAll("\\\\","/");
+//        System.err.println(getImageFileNameNoExtension(path));
+
+//        String path = "/Users/qiuzx/IdeaProjects/qiuzx/deliverc/target/sender/";
+//        List<File> list = new ArrayList<>();
+//        getFileList(list,path);
+//        list.forEach(file->{
+//            System.err.println(file.getAbsolutePath());
+//        });
+
     }
 
     /**
@@ -116,5 +146,76 @@ public class FileIOUtils {
                 }
             }
         }
+    }
+
+    /**
+     * 初始化测试文件夹
+     * @param base_dir
+     * @param relative_dir
+     */
+    public static void init_test_dir(String base_dir,String relative_dir){
+       String path = base_dir+relative_dir;
+       File dir = new File(path);
+       if(!dir.exists()){
+           boolean res = dir.mkdirs();
+           System.err.println("创建[测试]系统文件夹["+path+"] " + (res?"success":"failure"));
+       }
+    }
+
+
+
+
+    /**
+     * 从全路径中获取文件名称，不包含扩展名
+     * @param filePath
+     * @return
+     */
+    public static String getImageFileName(String filePath,boolean hasExtension) {
+        if (StringUtils.isBlank(filePath)) {
+            return filePath;
+        }
+        //转换为统一的格式
+        filePath = filePath.replaceAll("\\\\","/");
+
+        int lastPoi = filePath.lastIndexOf('.');
+        int lastSep = filePath.lastIndexOf("/");
+        //不含扩展名
+        if(!hasExtension) {
+            if (lastSep == -1) {
+                return (lastPoi == -1 ? filePath : filePath.substring(0, lastPoi));
+            }
+            if (lastPoi == -1 || lastSep > lastPoi) {
+                return filePath.substring(lastSep + 1);
+            }
+            return filePath.substring(lastSep + 1, lastPoi);
+        }else{
+            if (lastSep == -1) {
+                return filePath;
+            }
+            return filePath.substring(lastSep + 1);
+        }
+    }
+
+    /**
+     * 获取指定文件夹下及其子目录下的所有文件信息
+     * @param filelist
+     * @param filePath
+     * @return
+     */
+    public static List<File> getFileList(List<File> filelist,String filePath) {
+        File dir = new File(filePath);
+        File[] files = dir.listFiles(); // 该文件目录下文件全部放入数组
+        File file = null;
+        if (files != null) {
+            for (int i = 0; i < files.length; i++) {
+                file = files[i];
+                if (file.isDirectory()) { // 判断是文件还是文件夹
+                    getFileList(filelist,file.getAbsolutePath()); // 获取文件绝对路径
+                } else {
+                    filelist.add(file);
+                }
+            }
+        }
+        return filelist;
     }
 }

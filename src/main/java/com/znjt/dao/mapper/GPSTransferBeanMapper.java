@@ -2,6 +2,7 @@ package com.znjt.dao.mapper;
 
 import com.znjt.dao.beans.GPSTransferIniBean;
 import com.znjt.datasource.enhance.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -18,8 +19,10 @@ public interface GPSTransferBeanMapper extends Mapper {
      * @return
      */
     List<GPSTransferIniBean> findUnUpLoadGPSRecordDatas(int pageSize);
+    List<GPSTransferIniBean> findUnUpLoadGPSRecordDatasOnCondition(int pageSize);
 
     List<GPSTransferIniBean> findUnUpLoadGPSImgDatas(int pageSize);
+    List<GPSTransferIniBean> findUnUpLoadGPSImgDatas4EvenOrOdd(@Param("pageSize") int pageSize,@Param("mod") int mod);
 
     void updateCurrentUpLoadedSuccessGPSRescords(List<GPSTransferIniBean> gpsTransferIniBeans);
 

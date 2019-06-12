@@ -73,7 +73,24 @@
         <!--<bind name="ps" value="pageSize"/>-->
 
         select GPSID,COLLECT_TIME,STATUS,LATITUDE,LONGITUDE,SPEED,AZIMUTH,DECLINATION,CREATE_TIME,UPLOAD_TIME,RESULT,AREA,dataid,UPLOADSTATUS,original_Url as originalUrl
-         from gps where UPLOADSTATUS = 0 limit 0,#{pageSize}
+         from gps where UPLOADSTATUS = 0 and ORIGINAL_URL is not null and trim(ORIGINAL_URL) != ''  limit 0,#{pageSize}
+    </select>
+    <!--获取没有上传的记录-->
+    <select id="findUnUpLoadGPSRecordDatasOnCondition" resultType="GPSTransferIniBean" useCache="false">
+
+        <!--
+        通过include标签引入外面定义的sql片段，同时可以在内部通过property定义新的属性，
+        在被引入的sql片段内中通过${}的方式获取新定义的属性值.注意，在sql片段中只能使用${}获取定义的
+        属性值，sql片段中是不能使用#{},因为sql片段是不能预编译的，而#{}的含义就是预编译。
+        <include refid="sub_fregment">-->
+            <!--<property name="username" value="sz"/>-->
+            <!--<property name="age" value="12"/>-->
+        <!--</include>-->
+        <!-- 通过ognl表达式获取value对应属性的值，将值赋值给新创建的变量，之后就可以在sql中引用这个变量-->
+        <!--<bind name="ps" value="pageSize"/>-->
+
+        select GPSID,COLLECT_TIME,STATUS,LATITUDE,LONGITUDE,SPEED,AZIMUTH,DECLINATION,CREATE_TIME,UPLOAD_TIME,RESULT,AREA,dataid,UPLOADSTATUS,original_Url as originalUrl
+         from gps where UPLOADSTATUS = 0 and ORIGINAL_URL is not null and trim(ORIGINAL_URL) != '' and AREA is not null and and trim(AREA) != ''   limit 0,#{pageSize}
     </select>
 
     <!--
@@ -88,6 +105,10 @@
     -->
     <select id="findUnUpLoadGPSImgDatas" resultType="GPSTransferIniBean" useCache="false" flushCache="false">
          select GPSID,STATUS,dataid, original_Url as originalUrl,basedir as baseDir from gps where  ORIGINAL_URL is not null and trim(ORIGINAL_URL) != ''  and trim(ORIGINAL_URL) != 'no image'  and  UPLOADSTATUS = 1 and img_uploaded = false   limit 0,#{pageSize}
+    </select>
+
+    <select id="findUnUpLoadGPSImgDatas4EvenOrOdd" resultType="GPSTransferIniBean" useCache="false" flushCache="false">
+         select GPSID,STATUS,dataid, original_Url as originalUrl,basedir as baseDir from gps where  ORIGINAL_URL is not null and trim(ORIGINAL_URL) != ''  and trim(ORIGINAL_URL) != 'no image'  and  UPLOADSTATUS = 1 and img_uploaded = false and id%2 = #{mod}  limit 0,#{pageSize}
     </select>
 
     <!--

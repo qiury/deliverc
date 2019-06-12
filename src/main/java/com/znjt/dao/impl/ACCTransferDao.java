@@ -22,37 +22,41 @@ public class ACCTransferDao {
             ACCTransferBeanMapper mapper = EnhanceMapperFactory.createMapper(ACCTransferBeanMapper.class, sqlSession);
             recordDatas = mapper.findUnUpLoadACCRecordDatas(pageSize);
         } catch (Exception e) {
-            new RuntimeException("查询未上传的ACC记录出现异常",e);
+            throw new RuntimeException("查询未上传的ACC记录出现异常",e);
         } finally {
             EnhanceDbUtils.closeSession();
         }
         return recordDatas;
     }
 
-    public void updateCurrentUpLoadedSuccessACCRescords(String dbname,List<ACCTransferIniBean> accTransferIniBeans) {
+    public int updateCurrentUpLoadedSuccessACCRescords(String dbname,List<ACCTransferIniBean> accTransferIniBeans) {
+        int res = -1;
         try {
             SqlSession sqlSession = EnhanceMapperFactory.getMultiSqlSession(dbname, false);
             ACCTransferBeanMapper mapper = EnhanceMapperFactory.createMapper(ACCTransferBeanMapper.class, sqlSession);
-            mapper.updateCurrentUpLoadedSuccessACCRescords(accTransferIniBeans);
+            res = mapper.updateCurrentUpLoadedSuccessACCRescords(accTransferIniBeans);
             sqlSession.commit();
         } catch (Exception e) {
-            new RuntimeException("更新已经上传的ACC记录状态出现异常",e);
+            throw new RuntimeException("更新已经上传的ACC记录状态出现异常",e);
         } finally {
             EnhanceDbUtils.closeSession();
         }
+        return res;
     }
 
 
-    public void upLoadACCRecordDatas2UpStream(String dbname,List<ACCTransferIniBean> accTransferIniBeans) {
+    public int upLoadACCRecordDatas2UpStream(String dbname,List<ACCTransferIniBean> accTransferIniBeans) {
+        int res = -1;
         try {
             SqlSession sqlSession = EnhanceMapperFactory.getMultiSqlSession(dbname, false, ExecutorType.BATCH);
             ACCTransferBeanMapper mapper = EnhanceMapperFactory.createMapper(ACCTransferBeanMapper.class, sqlSession);
-            mapper.upLoadACCRecordDatas2UpStream(accTransferIniBeans);
+            res = mapper.upLoadACCRecordDatas2UpStream(accTransferIniBeans);
             sqlSession.commit();
         } catch (Exception e) {
-            new RuntimeException("更新已经上传的ACC状态出现异常",e);
+            throw new RuntimeException("更新已经上传的ACC状态出现异常",e);
         } finally {
             EnhanceDbUtils.closeSession();
         }
+        return res;
     }
 }

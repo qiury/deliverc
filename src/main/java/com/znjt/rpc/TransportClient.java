@@ -24,6 +24,11 @@ public class TransportClient {
         createShutdownHook();
     }
 
+    public void uploadBigDataByRPC(String filePath) {
+        transporterClientProxy.transferData2ServerBySync(filePath);
+    }
+
+
     /**
      * 是否通过流的方式上传图像（优点，具有数据去重功能。缺点，效率比批处理低）
      * @param gpsTransferIniBeans
@@ -55,6 +60,7 @@ public class TransportClient {
         }
         return null;
     }
+
 
 
     /**

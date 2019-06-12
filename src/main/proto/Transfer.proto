@@ -14,6 +14,8 @@ service TransferService{
 
     rpc transporterBySync(SyncDataRequest) returns (SyncDataResponse){}
 
+    rpc transporterBySyncTest(SyncDataRequest) returns (SyncDataResponse){}
+
     rpc transporterMulBySync(SyncMulImgRequest) returns (SyncMulImgResponse){}
 
     rpc transporterMulSingleBySync(SyncMulSingleImgRequest) returns (SyncMulSingleImgResponse){}
@@ -23,6 +25,7 @@ enum DataType{
     T_INI = 0;
     T_GPS = 1;
     T_GPS_SINGLE = 2;
+    T_GPS_SINGLE_TEST = 3;
 }
 
 
@@ -66,7 +69,6 @@ message SyncDataResponse{
     oneof record{
         INIRecord ini_record = 2;
         GPSRecord gps_record = 3;
-
     }
 }
 
@@ -81,9 +83,10 @@ message GPSRecord{
     string client_record_id = 1;
     string dataId = 2;
     bool serv_ops_res = 3;
-    repeated bytes img_data = 4;
+    repeated bytes img_data = 4 ;
     bool file_err = 5;
     int32 losted_size = 6;
+    repeated string file_names = 7 ;
 }
 
 message GPSSingleRecord{
@@ -92,4 +95,5 @@ message GPSSingleRecord{
     bool serv_ops_res = 3;
     bytes img_data = 4;
     bool file_err = 5;
+    string file_name = 6;
 }

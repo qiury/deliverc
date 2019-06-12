@@ -26,7 +26,8 @@ public class ACCTransferService {
      * @return
      */
     public List<ACCTransferIniBean> findUnUpLoadACCRecordDatas(String dbname, int pageSize) {
-        return dao.findUnUpLoadACCRecordDatas(dbname, pageSize);
+        List<ACCTransferIniBean> accTransferIniBeans = dao.findUnUpLoadACCRecordDatas(dbname, pageSize);
+        return accTransferIniBeans;
     }
 
 
@@ -47,7 +48,7 @@ public class ACCTransferService {
      * @param dbname
      * @param accTransferIniBeans
      */
-    public void upLoadACCRecordDatas2UpStream(String dbname, List<ACCTransferIniBean> accTransferIniBeans) {
+    public int upLoadACCRecordDatas2UpStream(String dbname, List<ACCTransferIniBean> accTransferIniBeans) {
         //对daaId进行填充
         Optional.ofNullable(accTransferIniBeans).ifPresent(rds -> {
             rds.forEach(item -> {
@@ -55,8 +56,9 @@ public class ACCTransferService {
                     item.setAccid(item.getStatus() + "&" + item.getAccid() + "&" + item.getId());
                 }
             });
-            dao.upLoadACCRecordDatas2UpStream(dbname, rds);
+
         });
+        return  dao.upLoadACCRecordDatas2UpStream(dbname, accTransferIniBeans);
     }
 
 }

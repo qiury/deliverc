@@ -38,12 +38,10 @@ final public class EnhanceSqlSessionFacotry {
                 sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream, environment);
                 logger.debug("Get {"+environment+"} SqlSessionFactory successfully.", environment);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("创建SqlSessionFactory失败",e);
             }
             SQLSESSIONFACTORYS.put(environment, sqlSessionFactory);
             return sqlSessionFactory;
         }
     }
-
-    
 }

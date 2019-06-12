@@ -23,6 +23,7 @@ public class GPSTransferService {
     private Logger logger = LoggerFactory.getLogger(GPSTransferService.class);
     private GPSTransferDao dao = new GPSTransferDao();
     private static String NO_IMAGE = "no image";
+
     /**
      * 获取没有上传的数据记录
      * @param pageSize
@@ -42,6 +43,24 @@ public class GPSTransferService {
     }
 
     /**
+     * 获取没有上传的数据记录
+     * @param pageSize
+     * @return
+     */
+    public List<GPSTransferIniBean> findUnUpLoadGPSRecordDatasOnCondition(String dbname,int pageSize){
+        List<GPSTransferIniBean> gpsTransferIniBeans = dao.findUnUpLoadGPSRecordDatasOnCondition(dbname,pageSize);
+        //如果GPSTransferIniBean中的路径不是'no image'就设置未null
+        Optional.ofNullable(gpsTransferIniBeans).ifPresent(gps->{
+            gps.forEach(item->{
+                if(!NO_IMAGE.equals(item.getOriginalUrl())){
+                    item.setOriginalUrl(null);
+                }
+            });
+        });
+        return gpsTransferIniBeans;
+    }
+
+    /**
      * 获取没有上传图像但是已经上传了记录的数据
      * @param dbname
      * @param pageSize
@@ -49,6 +68,15 @@ public class GPSTransferService {
      */
     public List<GPSTransferIniBean> findUnUpLoadGPSImgDatas(String dbname,int pageSize) {
         return dao.findUnUpLoadGPSImgDatas(dbname,pageSize);
+    }
+/**
+     * 获取没有上传图像但是已经上传了记录的数据
+     * @param dbname
+     * @param pageSize
+     * @return
+     */
+    public List<GPSTransferIniBean> findUnUpLoadGPSImgDatas4EvenOrOdd(String dbname,int pageSize,int mod) {
+        return dao.findUnUpLoadGPSImgDatas4EvenOrOdd(dbname,pageSize,mod);
     }
 
     /**
@@ -89,6 +117,8 @@ public class GPSTransferService {
         });
         dao.upLoadGPSRecordDatas2UpStream(dbname,gpsTransferIniBeans);
     }
+
+
 
     public int updateGPSImgPath2DBRecord(String dbName,GPSTransferIniBean gpsTransferIniBean){
         return dao.updateGPSImgPath2DBRecord(dbName,gpsTransferIniBean);

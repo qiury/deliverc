@@ -92,7 +92,7 @@ public class ImageProcessor4Thrift {
                 received_img_size++;
 
                 System.err.println("single img size = " + bytes.length);
-                sipr = ImageUpLoadProcssor.doneSingleImage2Disk(dataId,bytes);
+                sipr = ImageUpLoadProcssor.doneSingleImage2Disk(dataId,bytes,true);
                 if(sipr.isPersistent()){
                     if(StringUtils.isBlank(join_path)){
                         join_path = sipr.getRelPath();

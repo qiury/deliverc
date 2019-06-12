@@ -14,11 +14,15 @@ import com.znjt.service.ACCTransferService;
 import com.znjt.service.GPSTransferService;
 import com.znjt.service.IRITransferService;
 import com.znjt.service.PCITransferService;
+import com.znjt.utils.FileIOUtils;
 import com.znjt.utils.LoggerUtils;
+import io.grpc.netty.shaded.io.netty.util.concurrent.DefaultThreadFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.*;
@@ -52,6 +56,45 @@ public class ClientBoot {
     //每条上传指令等待最大时长，在这个时间范围内的认为是合理的，否则需要减速
     private static final long TIME_WATER_LINE = 10000;
     private String[] ext_tables = null;
+    private boolean multi_condition_on_gps = false;
+    private boolean test_upload_speed = false;
+    private static ThreadPoolExecutor upload_file_pool = null;
+
+    static {
+        ArrayBlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(409600);
+        int processors = Runtime.getRuntime().availableProcessors();
+        upload_file_pool = new ThreadPoolExecutor(processors,processors*2, 2, TimeUnit.MILLISECONDS,queue,new NameTreadFactory(),new CustomerIgnorePolicy());
+    }
+
+    static class NameTreadFactory implements ThreadFactory {
+
+        private final AtomicInteger mThreadNum = new AtomicInteger(1);
+
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(r, "upload-thread-" + mThreadNum.getAndIncrement());
+            System.out.println(t.getName() + " has been created");
+            return t;
+        }
+    }
+    public static class CustomerIgnorePolicy implements RejectedExecutionHandler {
+        @Override
+        public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+            try {
+                //核心改造点，由blockingqueue的offer改成put阻塞方法
+                executor.getQueue().put(r);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            // doLog(r, e);
+        }
+
+        private void doLog(Runnable r, ThreadPoolExecutor e) {
+            // 可做日志记录等
+            // System.err.println( r.toString() + " rejected");
+            //System.out.println("completedTaskCount: " + e.getCompletedTaskCount());
+        }
+    }
 
     /**
      * 启动客户端任务
@@ -59,12 +102,13 @@ public class ClientBoot {
      * @param server_ip
      * @param server_port
      */
-    public void start_client_jobs(String server_ip, int server_port,String ip_pattern,String inner_ip_pattern,String[] ext_tables) {
+    public void start_client_jobs(String server_ip, int server_port,String ip_pattern,String inner_ip_pattern,String[] ext_tables,boolean test_upload_speed) {
         this.server_ip = server_ip;
         this.server_port = server_port;
         this.ip_pattern = ip_pattern;
         this.ext_tables = ext_tables;
         this.inner_ip_pattern = inner_ip_pattern;
+        this.test_upload_speed= test_upload_speed;
         if (server_ip == null || server_ip.equals("")) {
             throw new RuntimeException("IP地址[" + server_ip + "]不合法，无法启动客户端");
         }
@@ -73,6 +117,7 @@ public class ClientBoot {
 
 
     private void init() {
+        checkCondition();
         RATE_LIMITING = Boot.expire();
         accTransferService = new ACCTransferService();
         gpsTransferService = new GPSTransferService();
@@ -82,16 +127,30 @@ public class ClientBoot {
         start_monitor_jobs();
     }
 
+    private void checkCondition(){
+        if(this.ext_tables!=null){
+            List<String> tbs = Arrays.asList(ext_tables);
+            boolean has_pci = tbs.contains("pci");
+            boolean has_iri = tbs.contains("iri");
+            //this.multi_condition_on_gps = has_iri&&has_pci; //暂时取消该条件的过滤
+        }
+    }
+
     /**
      * 启动任务
      */
     private void start_monitor_jobs() {
         start_net_jobs();
-        start_gps_record_jobs();
-        start_gps_img_jobs();
-        start_acc_jobs();
-        start_pci_jobs();
-        start_iri_jobs();
+        if(test_upload_speed){
+            start_gps_img_test_jobs();
+        }else {
+            start_gps_record_jobs();
+            start_gps_img_jobs4Even();
+            start_gps_img_jobs4Odd();
+            start_acc_jobs();
+            start_pci_jobs();
+            start_iri_jobs();
+        }
     }
 
 
@@ -100,6 +159,12 @@ public class ClientBoot {
             client.release();
         }
         exit_sys_stauts = true;
+    }
+
+    private void shutdownThreadPool(){
+        if(upload_file_pool!=null&&!upload_file_pool.isShutdown()){
+            upload_file_pool.shutdown();
+        }
     }
 
     private void start_net_jobs() {
@@ -127,9 +192,10 @@ public class ClientBoot {
                     try {
                         start_monitor_acc();
                     }catch (Exception ex){
-                        ex.printStackTrace();
-                    }
+                        System.err.println("acc数据传输过程中出现一次异常...");
+                        LoggerUtils.warn(logger, ExceptionInfoUtils.getExceptionCauseInfo(ex));
 
+                    }
                 }
             }, 2, 10, TimeUnit.SECONDS);
         } catch (Exception ex) {
@@ -148,9 +214,10 @@ public class ClientBoot {
                     try {
                         start_monitor_pci();
                     }catch (Exception ex){
-                        ex.printStackTrace();
-                    }
+                        System.err.println("pci数据传输过程中出现一次异常...");
+                        LoggerUtils.warn(logger, ExceptionInfoUtils.getExceptionCauseInfo(ex));
 
+                    }
                 }
             }, 2, 10, TimeUnit.SECONDS);
         } catch (Exception ex) {
@@ -169,7 +236,8 @@ public class ClientBoot {
                     try {
                         start_monitor_iri();
                     }catch (Exception ex){
-                        ex.printStackTrace();
+                        System.err.println("iri数据传输出现一次失败...");
+                        LoggerUtils.warn(logger, ExceptionInfoUtils.getExceptionCauseInfo(ex));
                     }
 
                 }
@@ -181,6 +249,23 @@ public class ClientBoot {
     }
 
 
+    private void start_gps_img_test_jobs(){
+        try {
+            scheduledExecutorService.scheduleAtFixedRate(() -> {
+                if (net_allowed_connect) {
+                    try {
+                        start_monitor_gps_test_img();
+                    }catch (Exception ex){
+                        System.err.println("图像传输测试出现一次失败...");
+                        LoggerUtils.warn(logger,ExceptionInfoUtils.getExceptionCauseInfo(ex));
+
+                    }
+                }
+            }, 3, 10, TimeUnit.SECONDS);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
     private void start_gps_record_jobs() {
         try {
             scheduledExecutorService.scheduleAtFixedRate(() -> {
@@ -188,7 +273,8 @@ public class ClientBoot {
                     try {
                         start_monitor_gps_records();
                     }catch (Exception ex){
-                        ex.printStackTrace();
+                        System.err.println("gps记录传输出现一次失败...");
+                        LoggerUtils.warn(logger, ExceptionInfoUtils.getExceptionCauseInfo(ex));
                     }
                 }
             }, 3, 10, TimeUnit.SECONDS);
@@ -198,15 +284,32 @@ public class ClientBoot {
 
     }
 
-    private void start_gps_img_jobs() {
+    private void start_gps_img_jobs4Even() {
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (net_allowed_connect) {
                 try {
                     if(check_net_status()) {
-                        start_monitor_gps_img();
+                        start_monitor_gps_img(true);
                     }
                 }catch (Exception ex){
-                    ex.printStackTrace();
+                    System.err.println("gps图像数据传输出现一次失败...");
+                    LoggerUtils.warn(logger, ExceptionInfoUtils.getExceptionCauseInfo(ex));
+
+                }
+
+            }
+        }, 3, 10, TimeUnit.SECONDS);
+    }
+    private void start_gps_img_jobs4Odd() {
+        scheduledExecutorService.scheduleAtFixedRate(() -> {
+            if (net_allowed_connect) {
+                try {
+                    if(check_net_status()) {
+                        start_monitor_gps_img(false);
+                    }
+                }catch (Exception ex){
+                    System.err.println("gps图像数据传输出现一次失败...");
+                    LoggerUtils.warn(logger, ExceptionInfoUtils.getExceptionCauseInfo(ex));
                 }
 
             }
@@ -235,27 +338,47 @@ public class ClientBoot {
                     }
                     LoggerUtils.info(logger,"处于外部网络环境为不准许上传图像数据.");
                 }
-            }else{
-                LoggerUtils.info(logger,"系统禁止了执行图像上传操作");
             }
         }catch (Exception ex){
             LoggerUtils.error(logger,ExceptionInfoUtils.getExceptionCauseInfo(ex));
         }
+        LoggerUtils.info(logger,"当前网络系统禁止了执行图像上传操作");
         return false;
     }
     /**
      * 检查gps中未上传的img信息
      */
-    private void start_monitor_gps_img() {
+    private void start_monitor_gps_test_img() {
+        List<File> fileList = new ArrayList<>();
+        FileIOUtils.getFileList(fileList,Boot.BASE_DIR+File.separator+"sender"+File.separator);
+        //FileIOUtils.getFileList(fileList,"/Users/qiuzx/IdeaProjects/qiuzx/deliverc/imgs/");
+        if(fileList.size()>0){
+            fileList.forEach(file->{
+                upload_file_pool.execute(()->{
+                    client.uploadBigDataByRPC(file.getAbsolutePath());
+                });
+                //file.delete();
+            });
+        }else{
+            System.err.println("没有需要上传的文件");
+        }
+    }
+    /**
+     * 检查gps中未上传的img信息
+     * @param even 上传的是
+     */
+    private void start_monitor_gps_img(boolean even) {
         //当前执行到第几层
         long invoke_time = 0;
         boolean by_sync_single = true;
-        logger.info("检查是否存在要上传的gps图像数据...");
+        LoggerUtils.info(logger,"检查是否存在要上传的gps图像数据...");
         boolean has_err = false;
+        String msg = even?"偶数记录":"奇数记录";
 
         //开始批上传的速度控制在2条，如果带宽准许，会逐步提升上传记录记录数。
         int dync_batch_size = 2;
-        List<GPSTransferIniBean> recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas(Boot.DOWNSTREAM_DBNAME, Boot.IMAGE_BATCH_SIZE);
+        //List<GPSTransferIniBean> recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas(Boot.DOWNSTREAM_DBNAME, Boot.IMAGE_BATCH_SIZE*2);
+        List<GPSTransferIniBean> recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas4EvenOrOdd(Boot.DOWNSTREAM_DBNAME, Boot.IMAGE_BATCH_SIZE*2,even?0:1);
         invoke_time++;
         UpLoadReson upLoadReson = null;
         long uplaod_speed = -1;
@@ -265,7 +388,7 @@ public class ClientBoot {
                 break;
             }
             limiting();
-            logger.info("开始上传gps图像数据...[" + recordDatas.size() + "]条");
+            logger.info("开始上传["+msg+"]gps图像数据...[" + recordDatas.size() + "]条");
             try {
                 //上传图像
                 upLoadReson = client.uploadBigDataByRPC(recordDatas,by_sync_single);
@@ -338,7 +461,7 @@ public class ClientBoot {
 
             }
 
-            recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas(Boot.DOWNSTREAM_DBNAME, dync_batch_size);
+            recordDatas = gpsTransferService.findUnUpLoadGPSImgDatas4EvenOrOdd(Boot.DOWNSTREAM_DBNAME, dync_batch_size,even?0:1);
             invoke_time++;
             /*
               前2次采用同步单条方式传输，防止前期没有来得及更新的数据造成了图像重复存储，造成服务器端出现僵尸数据
@@ -361,15 +484,37 @@ public class ClientBoot {
     /**
      * 检查gps未上传的记录
      */
+    private void start_monitor_gps_test_records() {
+        LoggerUtils.info(logger, "检查是否存在要上传的gps记录数据...");
+        //查询指定目录下是否存在需要上传的文件
+
+        //开始递归查询
+
+    }
+
+    /**
+     * 检查gps未上传的记录
+     */
     private void start_monitor_gps_records() {
         LoggerUtils.info(logger,"检查是否存在要上传的gps记录数据...");
-        List<GPSTransferIniBean> recordDatas = gpsTransferService.findUnUpLoadGPSRecordDatas(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
+        List<GPSTransferIniBean> recordDatas = null;
+        if(multi_condition_on_gps){
+            recordDatas = gpsTransferService.findUnUpLoadGPSRecordDatasOnCondition(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
+        }else{
+            recordDatas = gpsTransferService.findUnUpLoadGPSRecordDatas(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
+        }
+
         while (recordDatas != null && recordDatas.size() > 0) {
             limiting();
             LoggerUtils.info(logger,"开始批量上传GPS记录[" + recordDatas.size() + "]条");
             gpsTransferService.upLoadGPSRecordDatas2UpStream(Boot.UPSTREAM_DBNAME, recordDatas);
             gpsTransferService.updateCurrentUpLoadedSuccessGPSRescords(Boot.DOWNSTREAM_DBNAME, recordDatas);
-            recordDatas = gpsTransferService.findUnUpLoadGPSRecordDatas(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
+            if(multi_condition_on_gps){
+                recordDatas = gpsTransferService.findUnUpLoadGPSRecordDatasOnCondition(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
+            }else{
+                recordDatas = gpsTransferService.findUnUpLoadGPSRecordDatas(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
+            }
+
             if (!net_allowed_connect||exit_sys_stauts) {
                 break;
             }

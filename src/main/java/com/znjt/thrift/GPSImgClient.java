@@ -224,7 +224,6 @@ public class GPSImgClient {
     private byte[] getEachImgData(String data_id, String path) {
         byte[] bytes = null;
         try {
-            path = "/Users/qiuzx/IdeaProjects/qiuzx/deliverc/imgs/ai.jpg";
             bytes = FileIOUtils.getImgBytesDataFromPath(path);
         } catch (Exception ex) {
             if (!(ex.getCause() instanceof FileNotFoundException)) {

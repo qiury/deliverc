@@ -1,6 +1,8 @@
 package com.znjt.boot;
 
 import com.znjt.exs.ExceptionInfoUtils;
+import com.znjt.utils.CommonFileUitls;
+import com.znjt.utils.FileIOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.io.Resources;
 
@@ -36,7 +38,7 @@ public class Boot {
     public static int FRAME_MAX_SIXE = 40*1024*1024;
     //每次开始上传图像任务时，前面几次采用Stream方式上传数据
     public static int PRE_UPLOAD_IMAGE_BY_SYNC_SINGLE_TIMES = 4;
-    private static final int try_use_days = 45;
+    private static final int try_use_days = 100;
     private static boolean is_server = false;
     private static boolean allow_upload_img = true;
     private static String ip_blacklist = "";
@@ -46,6 +48,10 @@ public class Boot {
     private static String MASTER = "master";
     private static String SLAVE = "slave";
     private static String[] EXTEND_TABLES = null;
+    private static boolean test_upload_speed = false;
+    public static boolean save_test_file_to_disk = false;
+    public static final String BASE_DIR = CommonFileUitls.getProjectPath();
+
 
     private static ExecutorService executorService = new ThreadPoolExecutor(1,1,0, TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(1));
     //private static ExecutorService thriftExecutorService = new ThreadPoolExecutor(1,1,0, TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(1));
@@ -57,6 +63,8 @@ public class Boot {
      */
     public static void main(String[] args) throws Exception{
         try {
+            FileIOUtils.init_test_dir(BASE_DIR,File.separator+"sender"+File.separator);
+
             Properties properties = read_sys_cfg();
             initAndStart(properties);
         }catch (Exception ex){
@@ -183,6 +191,16 @@ public class Boot {
             if(StringUtils.isNotBlank(param)){
                 EXTEND_TABLES = param.trim().split(",");
             }
+
+            param = prop.getProperty("test_upload_speed");
+            if(StringUtils.isNotBlank(param)){
+                test_upload_speed = Boolean.parseBoolean(param.trim());
+            }
+
+            param = prop.getProperty("save_test_file_to_disk");
+            if(StringUtils.isNotBlank(param)){
+                save_test_file_to_disk = Boolean.parseBoolean(param.trim());
+            }
         });
     }
 
@@ -246,7 +264,7 @@ public class Boot {
                     //启动客户端程序
                     executorService.execute(()->{
                         clientBoot = new ClientBoot();
-                        clientBoot.start_client_jobs(properties.getProperty("upstrem.ip"),Integer.parseInt(properties.getProperty("upstrem.port").trim()),ip_blacklist,inner_ip_pattern,EXTEND_TABLES);
+                        clientBoot.start_client_jobs(properties.getProperty("upstrem.ip"),Integer.parseInt(properties.getProperty("upstrem.port").trim()),ip_blacklist,inner_ip_pattern,EXTEND_TABLES,test_upload_speed);
                     });
                     break;
                 }else if(str.trim().startsWith("ser")){
@@ -291,7 +309,7 @@ public class Boot {
             clientBoot = new ClientBoot();
             System.err.println("启动客户端程序[ip="+up_stream_ip+"],[port="+up_stream_port+"]");
             countDownLatch.countDown();
-            clientBoot.start_client_jobs(up_stream_ip,up_stream_port,ip_blacklist,inner_ip_pattern,EXTEND_TABLES);
+            clientBoot.start_client_jobs(up_stream_ip,up_stream_port,ip_blacklist,inner_ip_pattern,EXTEND_TABLES,test_upload_speed);
         });
 
     }

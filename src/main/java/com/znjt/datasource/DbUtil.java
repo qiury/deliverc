@@ -30,7 +30,7 @@ public class DbUtil {
             InputStream in = Resources.getResourceAsStream("db/mybatis/mybatis-config.xml");
             sessionFactory = new SqlSessionFactoryBuilder().build(in);
         } catch (IOException e) {
-            logger.error(ExceptionInfoUtils.getExceptionCauseInfo(e));
+            throw new RuntimeException(e);
         }
     }
 

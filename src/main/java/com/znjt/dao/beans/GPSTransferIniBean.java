@@ -1,6 +1,7 @@
 package com.znjt.dao.beans;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by qiuzx on 2019-03-12
@@ -35,7 +36,8 @@ public class GPSTransferIniBean {
     private String clientRecordId;
     private String file_full_path;
     private int totalLostedSize = 0;
-
+    //文件名称
+    private List<String> fileNames;
 
     public String getGpsid() {
         return gpsid;
@@ -203,6 +205,14 @@ public class GPSTransferIniBean {
 
     public void setTotalLostedSize(int totalLostedSize) {
         this.totalLostedSize = totalLostedSize;
+    }
+
+    public List<String> getFileNames() {
+        return fileNames;
+    }
+
+    public void setFileNames(List<String> fileNames) {
+        this.fileNames = fileNames;
     }
 
     @Override

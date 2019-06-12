@@ -18,6 +18,6 @@ public interface ACCTransferBeanMapper extends Mapper {
      * @return
      */
     List<ACCTransferIniBean> findUnUpLoadACCRecordDatas(int pageSize);
-    void updateCurrentUpLoadedSuccessACCRescords(List<ACCTransferIniBean> accTransferIniBeans);
-    void upLoadACCRecordDatas2UpStream(List<ACCTransferIniBean> accTransferIniBeans);
+    int updateCurrentUpLoadedSuccessACCRescords(List<ACCTransferIniBean> accTransferIniBeans);
+    int upLoadACCRecordDatas2UpStream(List<ACCTransferIniBean> accTransferIniBeans);
 }

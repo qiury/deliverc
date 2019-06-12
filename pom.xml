@@ -6,7 +6,7 @@
 
     <groupId>com.znjt.data</groupId>
     <artifactId>deliverc</artifactId>
-    <version>1.0</version>
+    <version>1.0.15</version>
 
 
     <dependencies>
@@ -162,6 +162,13 @@
             <version>3.2.0</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/com.google.zxing/javase -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>3.4.0</version>
+        </dependency>
+
 
     </dependencies>
 
@@ -193,15 +200,16 @@
                 <filtering>false</filtering>
             </resource>
             <!-- 控制资源文件的拷贝 -->
-            <resource>
-                <directory>src/main/resources</directory>
-                <includes>
-                    <include>**/*.properties</include>
-                    <include>**/*.xml</include>
-                </includes>
-                <filtering>false</filtering>
-                <targetPath>${project.build.directory}/config</targetPath>
-            </resource>
+            <!--<resource>-->
+                <!--<directory>src/main/resources</directory>-->
+                <!--<includes>-->
+                    <!--<include>**/*.properties</include>-->
+                    <!--<include>**/*.xml</include>-->
+                <!--</includes>-->
+                <!--<filtering>false</filtering>-->
+                <!--<targetPath>${project.build.directory}/config</targetPath>-->
+            <!--</resource>-->
+
         </resources>
         <plugins>
             <plugin>

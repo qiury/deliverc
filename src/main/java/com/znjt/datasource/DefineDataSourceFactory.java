@@ -22,7 +22,6 @@ public class DefineDataSourceFactory extends DruidDataSourceFactory implements D
     @Override
     public void setProperties(Properties properties) {
         this.props = properties;
-
     }
 
     @Override

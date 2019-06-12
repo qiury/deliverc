@@ -41,4 +41,14 @@ public interface GPSSingleRecordOrBuilder extends
    * <code>bool file_err = 5;</code>
    */
   boolean getFileErr();
+
+  /**
+   * <code>string file_name = 6;</code>
+   */
+  java.lang.String getFileName();
+  /**
+   * <code>string file_name = 6;</code>
+   */
+  com.google.protobuf.ByteString
+      getFileNameBytes();
 }

@@ -1,12 +1,12 @@
 package com.znjt.rpc;
 
 import com.google.protobuf.ByteString;
-import com.znjt.utils.CommonFileUitls;
 import com.znjt.boot.Boot;
 import com.znjt.dao.beans.GPSTransferIniBean;
 import com.znjt.exs.ExceptionInfoUtils;
 import com.znjt.proto.*;
 import com.znjt.service.GPSTransferService;
+import com.znjt.utils.CommonFileUitls;
 import com.znjt.utils.FileIOUtils;
 import com.znjt.utils.LoggerUtils;
 import io.grpc.Context;
@@ -19,6 +19,8 @@ import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -33,7 +35,8 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
     public static final String BASE_DIR = CommonFileUitls.getProjectPath();
     private GPSTransferService gpsTransferService = new GPSTransferService();
     static {
-        FileIOUtils.init_fs_dirs(BASE_DIR,File.separator+"fs"+File.separator);
+        FileIOUtils.init_fs_dirs(BASE_DIR, File.separator+"fs"+File.separator);
+        FileIOUtils.init_test_dir(BASE_DIR,File.separator+"received"+File.separator);
     }
 
     /**
@@ -49,13 +52,13 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
         }
         if(request.getDataType()==DataType.T_GPS){
             if(logger.isWarnEnabled()) {
-                logger.warn("开始执行同步批处理客户端上传图像的请求操作");
+                logger.warn("1. 开始执行同步批处理客户端上传图像的请求操作");
             }
             Instant instant = Instant.now();
             List<GPSRecord> records = ImageUpLoadProcssor.processGPSRecord(request.getGpsRecordList(),gpsTransferService);
             SyncMulImgResponse syncMulImgResponse = SyncMulImgResponse.newBuilder().setDataType(DataType.T_GPS).addAllGpsRecord(records).build();
             if(logger.isWarnEnabled()) {
-                logger.warn("同步批处理客户端上传图像的请求操作结束，批出处理[" + records.size() + "]条记录，耗时[" + Duration.between(instant, Instant.now()).toMillis() + "] ms");
+                logger.warn("3. 同步批处理客户端上传图像的请求操作结束，批出处理[" + records.size() + "]条记录，耗时[" + Duration.between(instant, Instant.now()).toMillis() + "] ms");
             }
             responseObserver.onNext(syncMulImgResponse);
         }
@@ -75,6 +78,19 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
         doneClientRequest(request,responseObserver);
         responseObserver.onCompleted();
     }
+    /**
+     * 同步处理请求的方式
+     * @param request
+     * @param responseObserver
+     */
+    @Override
+    public void transporterBySyncTest(SyncDataRequest request, StreamObserver<SyncDataResponse> responseObserver) {
+        if(check_timeout(responseObserver)){
+            return;
+        }
+        doneClientRequest(request,responseObserver);
+        responseObserver.onCompleted();
+    }
 
     private boolean check_timeout(StreamObserver responseObserver){
         //阻塞造成的超时
@@ -84,6 +100,7 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
         }
         return false;
     }
+
 
     /**
      * 同步处理请求，数据中每一个图像单独封装一个record对象，需要将这些对象进行合并。
@@ -160,14 +177,14 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
                 //没有图像数据不处理，直接向客户端方式数据出结果和图像数据状态
                 ops_res = true;
             } else {
-                GPSTransferIniBean transferIniBean = ImageUpLoadProcssor.processGPSRecord(gpsRecord);
+                GPSTransferIniBean transferIniBean = ImageUpLoadProcssor.processGPSRecord(gpsRecord,true);
                 losted_size=transferIniBean.getTotalLostedSize();
                 try {
                     int res = gpsTransferService.updateGPSImgPath2DBRecord(Boot.UPSTREAM_DBNAME,transferIniBean);
                     ops_res = true;
                     //说明没有记录被更新(数据重复上传)
                     if(res==0){
-                        LoggerUtils.warn(logger,"Warn：路径在"+transferIniBean.getOriginalUrl()+"图像，名称为["+gpsRecord.getDataId()+".jgp]已经存在，进行去重操作...");
+                        LoggerUtils.warn(logger,"Warn：路径在"+transferIniBean.getOriginalUrl()+"图像已经存在，进行去重操作...");
                         ImageUpLoadProcssor.iterDelFiles(transferIniBean.getOriginalUrl());
                     }
                 }catch (Exception ex){
@@ -184,8 +201,21 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
                     .setGpsRecord(record)
                     .build();
             responseObserver.onNext(response);
+        }else if(syncDataRequest.getDataType() == DataType.T_GPS_SINGLE_TEST){
+            if(Boot.save_test_file_to_disk) {
+                GPSRecord gpsRecord = syncDataRequest.getGpsRecord();
+                //处理客户端图像
+                String dataId = gpsRecord.getDataId();
+                List<ByteString> imgDataList = gpsRecord.getImgDataList();
+                ImageUpLoadProcssor.processGPSRecordTest(gpsRecord);
+            }
+            SyncDataResponse response = SyncDataResponse.newBuilder()
+                    .setDataType(DataType.T_GPS_SINGLE_TEST)
+                    .build();
+            responseObserver.onNext(response);
         }
     }
+
 //    private void doneClientRequest(SyncDataRequest syncDataRequest, StreamObserver<SyncDataResponse> responseObserver) {
 //        //GPS表
 //        if (syncDataRequest.getDataType() == DataType.T_GPS) {
@@ -282,4 +312,6 @@ public class TransferProtoImpl4Server extends TransferServiceGrpc.TransferServic
 //            }
 //        }
 //    }
+
+
 }

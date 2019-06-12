@@ -22,6 +22,7 @@ private static final long serialVersionUID = 0L;
     imgData_ = java.util.Collections.emptyList();
     fileErr_ = false;
     lostedSize_ = 0;
+    fileNames_ = com.google.protobuf.LazyStringArrayList.EMPTY;
   }
 
   @java.lang.Override
@@ -83,6 +84,15 @@ private static final long serialVersionUID = 0L;
             lostedSize_ = input.readInt32();
             break;
           }
+          case 58: {
+            java.lang.String s = input.readStringRequireUtf8();
+            if (!((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
+              fileNames_ = new com.google.protobuf.LazyStringArrayList();
+              mutable_bitField0_ |= 0x00000040;
+            }
+            fileNames_.add(s);
+            break;
+          }
           default: {
             if (!parseUnknownFieldProto3(
                 input, unknownFields, extensionRegistry, tag)) {
@@ -100,6 +110,9 @@ private static final long serialVersionUID = 0L;
     } finally {
       if (((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
         imgData_ = java.util.Collections.unmodifiableList(imgData_);
+      }
+      if (((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
+        fileNames_ = fileNames_.getUnmodifiableView();
       }
       this.unknownFields = unknownFields.build();
       makeExtensionsImmutable();
@@ -236,6 +249,35 @@ private static final long serialVersionUID = 0L;
     return lostedSize_;
   }
 
+  public static final int FILE_NAMES_FIELD_NUMBER = 7;
+  private com.google.protobuf.LazyStringList fileNames_;
+  /**
+   * <code>repeated string file_names = 7;</code>
+   */
+  public com.google.protobuf.ProtocolStringList
+      getFileNamesList() {
+    return fileNames_;
+  }
+  /**
+   * <code>repeated string file_names = 7;</code>
+   */
+  public int getFileNamesCount() {
+    return fileNames_.size();
+  }
+  /**
+   * <code>repeated string file_names = 7;</code>
+   */
+  public java.lang.String getFileNames(int index) {
+    return fileNames_.get(index);
+  }
+  /**
+   * <code>repeated string file_names = 7;</code>
+   */
+  public com.google.protobuf.ByteString
+      getFileNamesBytes(int index) {
+    return fileNames_.getByteString(index);
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -267,6 +309,9 @@ private static final long serialVersionUID = 0L;
     }
     if (lostedSize_ != 0) {
       output.writeInt32(6, lostedSize_);
+    }
+    for (int i = 0; i < fileNames_.size(); i++) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 7, fileNames_.getRaw(i));
     }
     unknownFields.writeTo(output);
   }
@@ -304,6 +349,14 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeInt32Size(6, lostedSize_);
     }
+    {
+      int dataSize = 0;
+      for (int i = 0; i < fileNames_.size(); i++) {
+        dataSize += computeStringSizeNoTag(fileNames_.getRaw(i));
+      }
+      size += dataSize;
+      size += 1 * getFileNamesList().size();
+    }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
     return size;
@@ -332,6 +385,8 @@ private static final long serialVersionUID = 0L;
         == other.getFileErr());
     result = result && (getLostedSize()
         == other.getLostedSize());
+    result = result && getFileNamesList()
+        .equals(other.getFileNamesList());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -359,6 +414,10 @@ private static final long serialVersionUID = 0L;
         getFileErr());
     hash = (37 * hash) + LOSTED_SIZE_FIELD_NUMBER;
     hash = (53 * hash) + getLostedSize();
+    if (getFileNamesCount() > 0) {
+      hash = (37 * hash) + FILE_NAMES_FIELD_NUMBER;
+      hash = (53 * hash) + getFileNamesList().hashCode();
+    }
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -504,6 +563,8 @@ private static final long serialVersionUID = 0L;
 
       lostedSize_ = 0;
 
+      fileNames_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      bitField0_ = (bitField0_ & ~0x00000040);
       return this;
     }
 
@@ -542,6 +603,11 @@ private static final long serialVersionUID = 0L;
       result.imgData_ = imgData_;
       result.fileErr_ = fileErr_;
       result.lostedSize_ = lostedSize_;
+      if (((bitField0_ & 0x00000040) == 0x00000040)) {
+        fileNames_ = fileNames_.getUnmodifiableView();
+        bitField0_ = (bitField0_ & ~0x00000040);
+      }
+      result.fileNames_ = fileNames_;
       result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
@@ -617,6 +683,16 @@ private static final long serialVersionUID = 0L;
       }
       if (other.getLostedSize() != 0) {
         setLostedSize(other.getLostedSize());
+      }
+      if (!other.fileNames_.isEmpty()) {
+        if (fileNames_.isEmpty()) {
+          fileNames_ = other.fileNames_;
+          bitField0_ = (bitField0_ & ~0x00000040);
+        } else {
+          ensureFileNamesIsMutable();
+          fileNames_.addAll(other.fileNames_);
+        }
+        onChanged();
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -932,6 +1008,100 @@ private static final long serialVersionUID = 0L;
     public Builder clearLostedSize() {
       
       lostedSize_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private com.google.protobuf.LazyStringList fileNames_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+    private void ensureFileNamesIsMutable() {
+      if (!((bitField0_ & 0x00000040) == 0x00000040)) {
+        fileNames_ = new com.google.protobuf.LazyStringArrayList(fileNames_);
+        bitField0_ |= 0x00000040;
+       }
+    }
+    /**
+     * <code>repeated string file_names = 7;</code>
+     */
+    public com.google.protobuf.ProtocolStringList
+        getFileNamesList() {
+      return fileNames_.getUnmodifiableView();
+    }
+    /**
+     * <code>repeated string file_names = 7;</code>
+     */
+    public int getFileNamesCount() {
+      return fileNames_.size();
+    }
+    /**
+     * <code>repeated string file_names = 7;</code>
+     */
+    public java.lang.String getFileNames(int index) {
+      return fileNames_.get(index);
+    }
+    /**
+     * <code>repeated string file_names = 7;</code>
+     */
+    public com.google.protobuf.ByteString
+        getFileNamesBytes(int index) {
+      return fileNames_.getByteString(index);
+    }
+    /**
+     * <code>repeated string file_names = 7;</code>
+     */
+    public Builder setFileNames(
+        int index, java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureFileNamesIsMutable();
+      fileNames_.set(index, value);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string file_names = 7;</code>
+     */
+    public Builder addFileNames(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureFileNamesIsMutable();
+      fileNames_.add(value);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string file_names = 7;</code>
+     */
+    public Builder addAllFileNames(
+        java.lang.Iterable<java.lang.String> values) {
+      ensureFileNamesIsMutable();
+      com.google.protobuf.AbstractMessageLite.Builder.addAll(
+          values, fileNames_);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string file_names = 7;</code>
+     */
+    public Builder clearFileNames() {
+      fileNames_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      bitField0_ = (bitField0_ & ~0x00000040);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string file_names = 7;</code>
+     */
+    public Builder addFileNamesBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      ensureFileNamesIsMutable();
+      fileNames_.add(value);
       onChanged();
       return this;
     }

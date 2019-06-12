@@ -30,6 +30,18 @@ public class GPSTransferDao {
         return recordDatas;
     }
 
+    public List<GPSTransferIniBean> findUnUpLoadGPSRecordDatasOnCondition(String dbname,int pageSize) {
+        List<GPSTransferIniBean> recordDatas = null;
+        try {
+            SqlSession sqlSession = EnhanceMapperFactory.getMultiSqlSession(dbname, true);
+            GPSTransferBeanMapper mapper = EnhanceMapperFactory.createMapper(GPSTransferBeanMapper.class, sqlSession);
+            recordDatas = mapper.findUnUpLoadGPSRecordDatasOnCondition(pageSize);
+        } finally {
+            EnhanceDbUtils.closeSession();
+        }
+        return recordDatas;
+    }
+
     public List<GPSTransferIniBean> findUnUpLoadGPSImgDatas(String dbname,int pageSize) {
         List<GPSTransferIniBean> recordDatas = null;
         try {
@@ -41,6 +53,20 @@ public class GPSTransferDao {
         }
         return recordDatas;
     }
+
+    public List<GPSTransferIniBean> findUnUpLoadGPSImgDatas4EvenOrOdd(String dbname,int pageSize,int mod) {
+        List<GPSTransferIniBean> recordDatas = null;
+        try {
+            SqlSession sqlSession = EnhanceMapperFactory.getMultiSqlSession(dbname, true);
+            GPSTransferBeanMapper mapper = EnhanceMapperFactory.createMapper(GPSTransferBeanMapper.class, sqlSession);
+            recordDatas = mapper.findUnUpLoadGPSImgDatas4EvenOrOdd(pageSize,mod);
+        }  finally {
+            EnhanceDbUtils.closeSession();
+        }
+        return recordDatas;
+    }
+
+
 
     public void updateCurrentUpLoadedSuccessGPSRescords(String dbname,List<GPSTransferIniBean> gpsTransferIniBeans) {
         try {

@@ -54,4 +54,23 @@ public interface GPSRecordOrBuilder extends
    * <code>int32 losted_size = 6;</code>
    */
   int getLostedSize();
+
+  /**
+   * <code>repeated string file_names = 7;</code>
+   */
+  java.util.List<java.lang.String>
+      getFileNamesList();
+  /**
+   * <code>repeated string file_names = 7;</code>
+   */
+  int getFileNamesCount();
+  /**
+   * <code>repeated string file_names = 7;</code>
+   */
+  java.lang.String getFileNames(int index);
+  /**
+   * <code>repeated string file_names = 7;</code>
+   */
+  com.google.protobuf.ByteString
+      getFileNamesBytes(int index);
 }
