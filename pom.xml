@@ -6,7 +6,7 @@
 
     <groupId>com.znjt.data</groupId>
     <artifactId>deliverc</artifactId>
-    <version>1.0.15</version>
+    <version>1.0.16</version>
 
 
     <dependencies>
@@ -161,14 +161,6 @@
             <artifactId>disruptor</artifactId>
             <version>3.2.0</version>
         </dependency>
-
-        <!-- https://mvnrepository.com/artifact/com.google.zxing/javase -->
-        <dependency>
-            <groupId>com.google.zxing</groupId>
-            <artifactId>javase</artifactId>
-            <version>3.4.0</version>
-        </dependency>
-
 
     </dependencies>
 

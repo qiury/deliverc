@@ -1,5 +1,6 @@
 package com.znjt.boot;
 
+import com.cmd.Shutdown;
 import com.znjt.dao.beans.ACCTransferIniBean;
 import com.znjt.dao.beans.GPSTransferIniBean;
 import com.znjt.dao.beans.IRITransferIniBean;
@@ -22,6 +23,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -59,6 +64,18 @@ public class ClientBoot {
     private boolean multi_condition_on_gps = false;
     private boolean test_upload_speed = false;
     private static ThreadPoolExecutor upload_file_pool = null;
+    private static volatile boolean has_data_transfer = false;
+    private static volatile LocalDateTime lastest_upload_time = LocalDateTime.now();
+
+    //超过多久没有数据上传就可以执行关机计划
+    private static final int wait_for_check_has_datas = 600;
+    //执行关机计划的具体时间
+    private static volatile LocalDateTime exec_shutdown_cmd_time = null;
+    //当前的任务是否被取消了
+    private static volatile boolean wating_shutdown = false;
+    private static volatile boolean manual_canceled_shutdown = false;
+
+    private static final int delay_sec_to_shutdown_sys = 20;
 
     static {
         ArrayBlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(409600);
@@ -141,6 +158,7 @@ public class ClientBoot {
      */
     private void start_monitor_jobs() {
         start_net_jobs();
+        start_check_shutdown_sys_jobs();
         if(test_upload_speed){
             start_gps_img_test_jobs();
         }else {
@@ -167,12 +185,68 @@ public class ClientBoot {
         }
     }
 
+    /**
+     * 取消关机命令
+     */
+    public void cancel_shoudown_jobs(){
+        if(wating_shutdown){
+            manual_canceled_shutdown = true;
+            exec_shutdown_cmd_time = null;
+            update_lastest_upload_time();
+            Shutdown.printCancelShutdownInfo();
+        }
+        wating_shutdown = false;
+    }
+
+    private void start_check_shutdown_sys_jobs(){
+       scheduledExecutorService.scheduleWithFixedDelay(() -> {
+           //如果人工取消过关机计划，那么就永久关闭该计划
+           // if(manual_canceled_shutdown){
+           //     return;
+           //  }
+            LocalDateTime now = LocalDateTime.now();
+            Duration duration = Duration.between(lastest_upload_time, now);
+            long dt = duration.getSeconds();
+            if (dt > wait_for_check_has_datas) {
+                if (exec_shutdown_cmd_time == null) {
+                    exec_shutdown_cmd_time = LocalDateTime.now().plusSeconds(delay_sec_to_shutdown_sys);
+                    Shutdown.printShotdownInfo(exec_shutdown_cmd_time);
+                    wating_shutdown = true;//等待关机状态
+                } else {
+                    if (now.isAfter(exec_shutdown_cmd_time)) {
+                        try {
+                            Shutdown.shutDownSysNow(0);
+                            //mockSystemIn4ExitSystem();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }, 5, 5, TimeUnit.MINUTES);
+    }
+
+    /**
+     * 模拟命令行，向系统发送退出指令
+     */
+    public static void mockSystemIn4ExitSystem(){
+        InputStream is = new InputStream() {
+            @Override
+            public int read() throws IOException {
+                return  'q';
+            }
+        };
+        System.setIn(is);
+    }
+
     private void start_net_jobs() {
         scheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
                 NetQuality netQuality = NetStatusUtils.getNetworkQuality(server_ip, 5);
                 if (netQuality == NetQuality.BAD || netQuality == NetQuality.BREOKEN) {
                     net_allowed_connect = false;
+                    //在网络通的情况下，不进行关机处理
+                    update_lastest_upload_time();
                 } else {
                     net_allowed_connect = true;
                 }
@@ -236,7 +310,7 @@ public class ClientBoot {
                     try {
                         start_monitor_iri();
                     }catch (Exception ex){
-                        System.err.println("iri数据传输出现一次失败...");
+                        System.err.println("iri数据传输出现一次失败...详情参照日志");
                         LoggerUtils.warn(logger, ExceptionInfoUtils.getExceptionCauseInfo(ex));
                     }
 
@@ -256,7 +330,7 @@ public class ClientBoot {
                     try {
                         start_monitor_gps_test_img();
                     }catch (Exception ex){
-                        System.err.println("图像传输测试出现一次失败...");
+                        System.err.println("图像传输测试出现一次失败...详情参照日志");
                         LoggerUtils.warn(logger,ExceptionInfoUtils.getExceptionCauseInfo(ex));
 
                     }
@@ -273,7 +347,7 @@ public class ClientBoot {
                     try {
                         start_monitor_gps_records();
                     }catch (Exception ex){
-                        System.err.println("gps记录传输出现一次失败...");
+                        System.err.println("gps记录传输出现一次失败...详情参照日志");
                         LoggerUtils.warn(logger, ExceptionInfoUtils.getExceptionCauseInfo(ex));
                     }
                 }
@@ -292,7 +366,7 @@ public class ClientBoot {
                         start_monitor_gps_img(true);
                     }
                 }catch (Exception ex){
-                    System.err.println("gps图像数据传输出现一次失败...");
+                    System.err.println("gps图像数据传输出现一次失败...详情参照日志");
                     LoggerUtils.warn(logger, ExceptionInfoUtils.getExceptionCauseInfo(ex));
 
                 }
@@ -308,7 +382,7 @@ public class ClientBoot {
                         start_monitor_gps_img(false);
                     }
                 }catch (Exception ex){
-                    System.err.println("gps图像数据传输出现一次失败...");
+                    System.err.println("gps图像数据传输出现一次失败...详情参照日志");
                     LoggerUtils.warn(logger, ExceptionInfoUtils.getExceptionCauseInfo(ex));
                 }
 
@@ -336,6 +410,8 @@ public class ClientBoot {
                             return true;
                         }
                     }
+                    //在外部环境下不准许关机操作
+                    update_lastest_upload_time();
                     LoggerUtils.info(logger,"处于外部网络环境为不准许上传图像数据.");
                 }
             }
@@ -384,6 +460,8 @@ public class ClientBoot {
         long uplaod_speed = -1;
         long consumerMils = -1;
         while (recordDatas != null && recordDatas.size() > 0) {
+            update_lastest_upload_time();
+            update_lastest_upload_time();
             if(!check_net_status()){
                 break;
             }
@@ -505,6 +583,7 @@ public class ClientBoot {
         }
 
         while (recordDatas != null && recordDatas.size() > 0) {
+            update_lastest_upload_time();
             limiting();
             LoggerUtils.info(logger,"开始批量上传GPS记录[" + recordDatas.size() + "]条");
             gpsTransferService.upLoadGPSRecordDatas2UpStream(Boot.UPSTREAM_DBNAME, recordDatas);
@@ -529,6 +608,7 @@ public class ClientBoot {
         LoggerUtils.info(logger,"检查是否存在要上传的ACC记录数据...");
         List<ACCTransferIniBean> recordDatas = accTransferService.findUnUpLoadACCRecordDatas(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
         while (recordDatas != null && recordDatas.size() > 0) {
+            update_lastest_upload_time();
             limiting();
             LoggerUtils.info(logger,"开始批量上传ACC记录[" + recordDatas.size() + "]条");
             accTransferService.upLoadACCRecordDatas2UpStream(Boot.UPSTREAM_DBNAME, recordDatas);
@@ -550,6 +630,7 @@ public class ClientBoot {
         List<IRITransferIniBean> recordDatas = iriTransferService.findUnUpLoadIRIRecordDatas(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
         while (recordDatas != null && recordDatas.size() > 0) {
             limiting();
+            update_lastest_upload_time();
             LoggerUtils.info(logger,"开始批量上传iri记录[" + recordDatas.size() + "]条");
             iriTransferService.upLoadACCRecordDatas2UpStream(Boot.UPSTREAM_DBNAME, recordDatas);
             iriTransferService.updateCurrentUpLoadedSuccessIRIRescords(Boot.DOWNSTREAM_DBNAME, recordDatas);
@@ -570,6 +651,7 @@ public class ClientBoot {
         List<PCITransferIniBean> recordDatas = pciTransferService.findUnUpLoadPCIRecordDatas(Boot.DOWNSTREAM_DBNAME, Boot.RECORD_BATCH_SIZE);
         while (recordDatas != null && recordDatas.size() > 0) {
             limiting();
+            update_lastest_upload_time();
             LoggerUtils.info(logger,"开始批量上传pci记录[" + recordDatas.size() + "]条");
             pciTransferService.upLoadPCIRecordDatas2UpStream(Boot.UPSTREAM_DBNAME, recordDatas);
             pciTransferService.updateCurrentUpLoadedSuccessPCIRescords(Boot.DOWNSTREAM_DBNAME, recordDatas);
@@ -619,5 +701,12 @@ public class ClientBoot {
             t.setDaemon(true);
             return t;
         }
+    }
+
+    /**
+     * 更新数据最新上传时间
+     */
+    private static void update_lastest_upload_time(){
+        lastest_upload_time = LocalDateTime.now();
     }
 }

@@ -203,7 +203,6 @@ public class Boot {
             }
         });
     }
-
     private static void ctrl_life_from_terminal(String appName){
         Scanner scanner = null;
         try {
@@ -215,7 +214,14 @@ public class Boot {
                 if(exit_cmds.contains(cmd)){
                     break;
                 }
+                //取消
+                if("m".equals(cmd)){
+                    if(clientBoot!=null){
+                        clientBoot.cancel_shoudown_jobs();
+                    }
+                }
                 System.err.println("输入exit(e)/quit(q)/close(c)退出程序 ");
+
             }
             System.err.println("系统即将退出，启动释放资源的操作..");
             relese_resource();
@@ -336,6 +342,12 @@ public class Boot {
             String cmd = scanner.nextLine();
             if(exit_cmds.contains(cmd)){
                 break;
+            }
+            //取消
+            if("m".equals(cmd)){
+                if(clientBoot!=null){
+                    clientBoot.cancel_shoudown_jobs();
+                }
             }
             System.err.println("输入exit(e)/quit(q)/close(c)退出程序 ");
         }

@@ -21,9 +21,7 @@ public class ACCTransferDao {
             SqlSession sqlSession = EnhanceMapperFactory.getMultiSqlSession(dbname, true);
             ACCTransferBeanMapper mapper = EnhanceMapperFactory.createMapper(ACCTransferBeanMapper.class, sqlSession);
             recordDatas = mapper.findUnUpLoadACCRecordDatas(pageSize);
-        } catch (Exception e) {
-            throw new RuntimeException("查询未上传的ACC记录出现异常",e);
-        } finally {
+        }finally {
             EnhanceDbUtils.closeSession();
         }
         return recordDatas;
@@ -36,9 +34,7 @@ public class ACCTransferDao {
             ACCTransferBeanMapper mapper = EnhanceMapperFactory.createMapper(ACCTransferBeanMapper.class, sqlSession);
             res = mapper.updateCurrentUpLoadedSuccessACCRescords(accTransferIniBeans);
             sqlSession.commit();
-        } catch (Exception e) {
-            throw new RuntimeException("更新已经上传的ACC记录状态出现异常",e);
-        } finally {
+        }  finally {
             EnhanceDbUtils.closeSession();
         }
         return res;
@@ -52,9 +48,7 @@ public class ACCTransferDao {
             ACCTransferBeanMapper mapper = EnhanceMapperFactory.createMapper(ACCTransferBeanMapper.class, sqlSession);
             res = mapper.upLoadACCRecordDatas2UpStream(accTransferIniBeans);
             sqlSession.commit();
-        } catch (Exception e) {
-            throw new RuntimeException("更新已经上传的ACC状态出现异常",e);
-        } finally {
+        }finally {
             EnhanceDbUtils.closeSession();
         }
         return res;

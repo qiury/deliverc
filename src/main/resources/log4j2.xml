@@ -255,21 +255,21 @@
         <Logger name="druid.sql" level="debug" additivity="false">
             <AppenderRef ref="Sql_RollingFile" />
         </Logger>
-        <Logger name="druid.sql.Statement" level="debug" additivity="false">
+        <Logger name="druid.sql.Statement" level="info" additivity="false">
             <AppenderRef ref="Sql_RollingFile" />
         </Logger>
         <Logger name="druid.sql.ResultSet" level="warn" additivity="false">
             <AppenderRef ref="Sql_RollingFile" />
         </Logger>
 
-        <Logger name="druid.sql.DataSource" level="debug" additivity="false">
+        <Logger name="druid.sql.DataSource" level="info" additivity="false">
             <AppenderRef ref="DataSource_RollingFile" />
         </Logger>
-        <Logger name="com.alibaba.druid.pool" level="debug" additivity="false">
+        <Logger name="com.alibaba.druid.pool" level="info" additivity="false">
             <AppenderRef ref="DataSource_RollingFile" />
         </Logger>
 
-        <Logger name="druid.sql.Connection" level="debug" additivity="false">
+        <Logger name="druid.sql.Connection" level="info" additivity="false">
             <AppenderRef ref="DataSource_RollingFile" />
         </Logger>
 

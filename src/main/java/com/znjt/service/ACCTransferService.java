@@ -58,7 +58,7 @@ public class ACCTransferService {
             });
 
         });
-        return  dao.upLoadACCRecordDatas2UpStream(dbname, accTransferIniBeans);
+        return dao.upLoadACCRecordDatas2UpStream(dbname, accTransferIniBeans);
     }
 
 }
